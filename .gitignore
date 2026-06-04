@@ -1,0 +1,27 @@
+# ====================================================================
+# Shared_Second_House_Operation_Platform 최상위 통합 gitignore
+# ====================================================================
+
+# 1. 모든 하위 폴더의 의존성 및 임시 빌드 파일 제외
+**/node_modules/
+**/.next/
+**/build/
+**/.gradle/
+**/.dart_tool/
+**/.idea/
+**/*.iml
+
+# 2. 보안 필수: 모든 하위 폴더의 환경변수 파일 제외
+**.env
+**.env.local
+**.env.development.local
+**.env.production.local
+**/application.yml
+**/application.properties
+
+# 3. 운영체제 임시 파일 제외
+.DS_Store
+Thumbs.db
+
+
+**/TestGitignore
