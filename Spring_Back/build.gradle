@@ -1,6 +1,8 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.6'
+	// Java 17과 호환 안정성 이슈
+	// id 'org.springframework.boot' version '4.0.6'에서 버전 하향 조정하였습니다
+	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -19,11 +21,23 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-	compileOnly 'org.projectlombok:lombok'
+	// Web & 공통 도구
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// 롬복(Lombok) - 컴파일 및 어노테이션 프로세서
+	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+	// [채팅 기능] WebSocket 및 STOMP 지원
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// [데이터 저장] JPA 및 H2 데이터베이스
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'com.h2database:h2'
+
+	// 테스트 환경 설정
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
