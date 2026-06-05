@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'org.springframework.boot' version '4.0.6' // 사용하시는 버전에 맞게 유지
 	// Java 17과 호환 안정성 이슈
 	// id 'org.springframework.boot' version '4.0.6'에서 버전 하향 조정하였습니다
 	id 'org.springframework.boot' version '3.4.3'
@@ -21,6 +22,12 @@ repositories {
 }
 
 dependencies {
+	// 1. 잘못된 스타터 이름 수정
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// Lombok 설정
+	compileOnly 'org.projectlombok:lombok'
 	// Web & 공통 도구
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -29,6 +36,7 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
+	// 테스트 스타터 수정
 	// [채팅 기능] WebSocket 및 STOMP 지원
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
@@ -41,6 +49,29 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// 2. QueryDSL (Spring Boot 3.x / 4.x 필수 설정)
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+	// MariaDB
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+}
+
+// Q클래스 생성 경로 설정
+def querydslDir = "src/main/generated"
+
+sourceSets {
+	main.java.srcDirs += [querydslDir]
+}
+
+tasks.withType(JavaCompile) {
+	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean.doLast {
+	file(querydslDir).deleteDir()
 }
 
 tasks.named('test') {
