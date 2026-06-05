@@ -1,0 +1,6 @@
+[파일구조]
+
+├── 📂 controller # UI의 상태를 관리하고 비즈니스 로직을 수행하는 곳
+├── 📂 dto        # API 통신용 Request/Response 데이터 모델 (Data Model)
+├── 📂 service    # 💡 백엔드 스프링 서버와 HTTP 통신을 담당하는 곳
+└── 📂 view       # 회원가입 UI 화면, 로그인 UI 화면 (*.dart)
