@@ -1,0 +1,13 @@
+비즈니스 도메인
+
+[파일구조 예시]
+
+domain
+    ├──controller
+    ├──dto
+    ├──entity
+    ├──repository
+    ├──service
+
+
+
