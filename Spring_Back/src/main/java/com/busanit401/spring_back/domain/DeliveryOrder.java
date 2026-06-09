@@ -41,4 +41,9 @@ public class DeliveryOrder {
     public void changeStatus(String status) {
         this.status = status;
     }
+
+    public void updateStatus(String status) {
+        this.status = status;
+    }
+
 }
