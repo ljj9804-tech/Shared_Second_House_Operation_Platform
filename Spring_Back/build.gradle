@@ -1,6 +1,8 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.6'
+	// Java 17과 호환 안정성 이슈
+	// id 'org.springframework.boot' version '4.0.6'에서 버전 하향 조정하였습니다
+	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -19,21 +21,54 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// Lombok 설정
 	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+	// Web & 공통 도구
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// 테스트 스타터 수정
+	// [채팅 기능] WebSocket 및 STOMP 지원
+	// 플러그인 설치 권장 메세지 발생 시 설치하시는걸 권장합니다(디코 일반 채널 참조)
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// [데이터 저장] JPA 및 H2 데이터베이스
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	// runtimeOnly 'com.h2database:h2' 테스트용 데이터베이스에서 위 라이브러리로 대체
+
+	// 테스트 환경 설정
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+	// 2. QueryDSL (Spring Boot 3.x / 4.x 필수 설정)
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+	// Swagger 접속 주소: http://localhost:8080/swagger-ui/index.html
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 
+}
+
+// Q클래스 생성 경로 설정
+def querydslDir = "src/main/generated"
+
+sourceSets {
+	main.java.srcDirs += [querydslDir]
+}
+
+tasks.withType(JavaCompile) {
+	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
+}
+
+clean.doLast {
+	file(querydslDir).deleteDir()
 }
 
 tasks.named('test') {
