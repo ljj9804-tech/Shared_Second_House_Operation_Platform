@@ -1,11 +1,12 @@
 package com.busanit401.spring_back.domain.entity.guestChat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "guest_chat_messages")
+@Table(name = "sh_guest_chat_messages")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -18,8 +19,9 @@ public class GuestChatMessage {
     private Long id;
 
     // 대화가 소속된 채팅방 (Many-to-One 단방향 연관관계 추천)
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "guest_chat_room_id", nullable = false)
+    @JoinColumn(name = "guest_chat_room_id")
     private GuestChatRoom guestChatRoom;
 
     // 메시지를 보낸 게스트(사용자)의 ID 혹은 이름

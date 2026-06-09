@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "guest_chat_rooms")
+@Table(name = "sh_guest_chat_rooms")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA용 기본 생성자
 @AllArgsConstructor // @Builder 동작을 위한 전체 생성자
