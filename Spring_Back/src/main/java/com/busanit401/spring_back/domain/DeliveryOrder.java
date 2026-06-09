@@ -5,7 +5,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "orders")
+// 🚨 진주 팀원의 DB 테이블 규칙 반영: 테이블명 앞에 sh_ 붙이기!
+@Table(name = "sh_orders")
 @Getter
 @Builder
 @AllArgsConstructor
@@ -37,7 +38,10 @@ public class DeliveryOrder {
         this.createdAt = LocalDateTime.now();
     }
 
-    // 상태 변경용 Setter 메서드 대신 비즈니스 메서드 사용
+    /**
+     * 💡 배송 상태 변경용 비즈니스 메서드
+     * (플러터 및 내부 단위 테스트에서 호출하여 사용합니다)
+     */
     public void changeStatus(String status) {
         this.status = status;
     }
@@ -45,5 +49,4 @@ public class DeliveryOrder {
     public void updateStatus(String status) {
         this.status = status;
     }
-
 }
