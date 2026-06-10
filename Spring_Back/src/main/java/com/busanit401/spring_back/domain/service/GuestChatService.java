@@ -1,9 +1,9 @@
-package com.busanit401.spring_back.domain.service.guestChat;
+package com.busanit401.spring_back.domain.service;
 
-import com.busanit401.spring_back.domain.entity.guestChat.GuestChatMessage;
-import com.busanit401.spring_back.domain.entity.guestChat.GuestChatRoom;
-import com.busanit401.spring_back.domain.repository.guestChat.GuestChatMessageRepository;
-import com.busanit401.spring_back.domain.repository.guestChat.GuestChatRoomRepository;
+import com.busanit401.spring_back.domain.entity.GuestChatMessage;
+import com.busanit401.spring_back.domain.entity.GuestChatRoom;
+import com.busanit401.spring_back.domain.repository.GuestChatMessageRepository;
+import com.busanit401.spring_back.domain.repository.GuestChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;

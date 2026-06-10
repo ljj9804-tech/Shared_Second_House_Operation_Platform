@@ -1,6 +1,6 @@
-package com.busanit401.spring_back.Controller;
+package com.busanit401.spring_back.controller;
 
-import com.busanit401.spring_back.domain.service.guestChat.GuestChatService;
+import com.busanit401.spring_back.domain.service.GuestChatService;
 import com.busanit401.spring_back.dto.GuestChatDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

@@ -1,4 +1,4 @@
-package com.busanit401.spring_back.Repository;
+package com.busanit401.spring_back.domain.repository;
 
 import com.busanit401.spring_back.domain.DeliveryOrder;
 import org.springframework.data.jpa.repository.JpaRepository;

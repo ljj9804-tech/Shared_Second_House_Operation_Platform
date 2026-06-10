@@ -1,4 +1,4 @@
-package com.busanit401.spring_back.domain.entity.guestChat;
+package com.busanit401.spring_back.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

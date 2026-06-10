@@ -1,7 +1,7 @@
-package com.busanit401.spring_back.Controller;
+package com.busanit401.spring_back.controller;
 
 import com.busanit401.spring_back.dto.DeliveryOrderDTO;
-import com.busanit401.spring_back.service.DeliveryService;
+import com.busanit401.spring_back.domain.service.DeliveryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
