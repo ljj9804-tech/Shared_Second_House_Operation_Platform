@@ -24,4 +24,19 @@ public abstract class BaseTimeEntity {
     @LastModifiedDate
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    // soft delete — User, Subscription 공통 사용
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void create() {
+        this.createdDate = LocalDateTime.now();
+    }
+
+
+
 }
