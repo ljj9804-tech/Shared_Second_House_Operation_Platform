@@ -3,7 +3,6 @@ package com.busanit401.spring_back.dto.user;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-import org.hibernate.validator.constraints.Range;
 
 @Getter
 @Setter
