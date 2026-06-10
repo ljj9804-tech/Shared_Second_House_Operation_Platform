@@ -1,5 +1,6 @@
 package com.busanit401.spring_back.domain;
 
+import com.busanit401.spring_back.dto.waitingSubscriptionUser.WaitingSubscriptionReq;
 import com.busanit401.spring_back.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,27 +8,32 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-@Table(name = "subscription")
-
+@Table(name = "subscriptions_user")
 public class SubscriptionsUser extends BaseTimeEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "subscription_id")
     private Long id;
 
+    // 대표 유저 (결제자)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // 숙소 팀원 파트 연동 (나중에 교체)
+    @Column(name = "accommodation_id", nullable = false)
+    private Long accommodationId;
 
     @Column(name = "duration_months", nullable = false)
-    private int durationMonths;  // 1 ~ 12
+    private int durationMonths;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -39,8 +45,25 @@ public class SubscriptionsUser extends BaseTimeEntity {
     @Column(name = "status", nullable = false)
     private SubscriptionStatus status;
 
-    @OneToOne(mappedBy = "subscription", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "subscriptionsUser", fetch = FetchType.LAZY)
     private Payment payment;
+
+    // 멤버 리스트 (APPROVED된 멤버들)
+    @OneToMany(mappedBy = "subscriptionsUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<WaitingSubscriptionUser> members = new ArrayList<>();
+
+
+
+    // 구독 승인 (관리자)
+    public void approve() {
+        this.status = SubscriptionStatus.ACTIVE;
+    }
+
+    // 구독 반려 (관리자)
+    public void reject() {
+        this.status = SubscriptionStatus.CANCELLED;
+    }
 
     // 구독 취소
     public void cancel() {
@@ -52,4 +75,15 @@ public class SubscriptionsUser extends BaseTimeEntity {
         this.status = SubscriptionStatus.EXPIRED;
     }
 
+    // 구독 신청 생성 (대표가 신청할 때)
+    public static SubscriptionsUser create(User leader, WaitingSubscriptionReq req) {
+        return SubscriptionsUser.builder()
+                .user(leader)
+                .accommodationId(req.getAccommodationId())
+                .durationMonths(req.getDurationMonths())
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusMonths(req.getDurationMonths()))
+                .status(SubscriptionStatus.PENDING)
+                .build();
+    }
 }
