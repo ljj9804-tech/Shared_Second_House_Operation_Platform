@@ -30,7 +30,7 @@ public class PaymentRefund {
 
     // 해당 월 환불 금액
     @Column(name = "refund_amount", nullable = false)
-    private Long refundAmount;
+    private int refundAmount;
 
     // 토스페이먼츠 환불 처리 후 받는 취소 키
     @Column(name = "cancel_key")

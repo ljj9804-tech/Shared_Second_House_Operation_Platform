@@ -24,21 +24,17 @@ public class Payment extends BaseTimeEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_id", nullable = false)
-    private SubscriptionsUser subscription;
+    private SubscriptionsUser subscriptionsUser;  // subscription → subscriptionsUser
 
-    // 토스페이먼츠 결제 고유키 (환불 시 필수)
     @Column(name = "payment_key", nullable = false, unique = true)
     private String paymentKey;
 
-    // 토스페이먼츠 주문 ID
     @Column(name = "order_id", nullable = false, unique = true)
     private String orderId;
 
-    // 전체 결제 금액
     @Column(name = "amount", nullable = false)
-    private Long amount;
+    private int amount;  // Long → int
 
-    // 환불된 총 금액 (월별 환불 누적)
     @Column(name = "refunded_amount", nullable = false)
     @Builder.Default
     private int refundedAmount = 0;
@@ -71,7 +67,6 @@ public class Payment extends BaseTimeEntity {
     // 월별 부분 환불
     public void refundMonth(int refundAmount) {
         this.refundedAmount += refundAmount;
-        // 전액 환불된 경우 상태 변경
         if (this.refundedAmount >= this.amount) {
             this.status = PaymentStatus.REFUNDED;
         }
