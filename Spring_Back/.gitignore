@@ -1,11 +1,3 @@
-seonggyu
-# Querydsl / JPA 자동 생성 빌드 폴더 제외 규칙
-**/build/
-**/generated/
-
-# 인텔리제이 개인 설정 파일 제외
-.idea/workspace.xml
-=======
 HELP.md
 .gradle
 build/
@@ -46,4 +38,3 @@ out/
 
 # QueryDSL
 src/main/generated
-middle

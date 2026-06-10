@@ -1,5 +1,7 @@
 package com.busanit401.spring_back.domain;
 
+import com.busanit401.spring_back.dto.user.SocialUserRequest;
+import com.busanit401.spring_back.dto.user.UserReq;
 import com.busanit401.spring_back.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -17,7 +19,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @Table(name = "user")
-public class User extends  BaseTimeEntity{
+public class User extends BaseTimeEntity {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -25,8 +27,11 @@ public class User extends  BaseTimeEntity{
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @Builder.Default
-    private List<SubscriptionsUser>  subscriptions = new ArrayList<>();
+    private List<SubscriptionsUser> subscriptions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<WaitingSubscriptionUser> waitingSubscriptionUsers = new ArrayList<>();
 
 
     @Column(name = "user_name", nullable = false, unique = true)
@@ -51,8 +56,8 @@ public class User extends  BaseTimeEntity{
 
 
     //비지니스 로직
-    public void update(String password, String nickname) {
-        this.password = password;
+    public void update(String username, String nickname) {
+        this.username = username;
         this.nickname = nickname;
     }
 
@@ -63,38 +68,28 @@ public class User extends  BaseTimeEntity{
     }
 
 
-//    public static User from(SocialUserRequest userRequest) {
-//        return User.builder()
-//                .username(userRequest.getUsername())
-//                .password(userRequest.getPassword())
-//                .nickname(userRequest.getNickname())
-//                .email(userRequest.getEmail())
-//                .role(userRequest.getRole())
-//                .build();
-//    }
-//
-//    public static User from(UserResp response) {
-//        return User.builder()
-//                .id(response.getUserId())
-//                .username(response.getUsername())
-//                .password(response.getPassword())
-//                .email(response.getEmail())
-//                .nickname(response.getNickname())
-//                .phoneNumber(response.getPhoneNumber())
-//                .role(response.getRole())
-//                .build();
-//    }
-//
-//    public static User from(UserReq request) {
-//        return User.builder()
-//                .username(request.getUsername())
-//                .password(request.getPassword())
-//                .nickname(request.getNickname())
-//                .email(request.getEmail())
-//                .phoneNumber(request.getPhoneNumber())
-//                .role(request.getRole())
-//                .build();
-//    }
+    public static User from(SocialUserRequest userRequest) {
+        return User.builder()
+                .username(userRequest.getUsername())
+                .password(userRequest.getPassword())
+                .nickname(userRequest.getNickname())
+                .email(userRequest.getEmail())
+                .role(userRequest.getRole())
+                .build();
+    }
+
+
+    public static User from(UserReq request, String encodedPassword
+    ) {
+        return User.builder()
+                .username(request.getUsername())
+                .password(encodedPassword)
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .phoneNumber(request.getPhoneNumber())
+                .role(request.getRole())
+                .build();
+    }
 
 
 
