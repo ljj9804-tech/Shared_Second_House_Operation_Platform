@@ -1,6 +1,6 @@
-package com.busanit401.spring_back.domain.repository.guestChat;
+package com.busanit401.spring_back.domain.repository;
 
-import com.busanit401.spring_back.domain.entity.guestChat.GuestChatMessage;
+import com.busanit401.spring_back.domain.entity.GuestChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

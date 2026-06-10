@@ -1,4 +1,4 @@
-package com.busanit401.spring_back.domain.entity.guestChat;
+package com.busanit401.spring_back.domain.entity;
 
 
 import jakarta.persistence.*;

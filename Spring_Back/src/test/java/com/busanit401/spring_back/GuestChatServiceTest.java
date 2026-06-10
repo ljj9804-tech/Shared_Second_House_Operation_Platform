@@ -1,11 +1,11 @@
 package com.busanit401.spring_back;
 
 
-import com.busanit401.spring_back.domain.entity.guestChat.GuestChatMessage;
-import com.busanit401.spring_back.domain.entity.guestChat.GuestChatRoom;
-import com.busanit401.spring_back.domain.repository.guestChat.GuestChatMessageRepository;
-import com.busanit401.spring_back.domain.repository.guestChat.GuestChatRoomRepository;
-import com.busanit401.spring_back.domain.service.guestChat.GuestChatService;
+import com.busanit401.spring_back.domain.entity.GuestChatMessage;
+import com.busanit401.spring_back.domain.entity.GuestChatRoom;
+import com.busanit401.spring_back.domain.repository.GuestChatMessageRepository;
+import com.busanit401.spring_back.domain.repository.GuestChatRoomRepository;
+import com.busanit401.spring_back.domain.service.GuestChatService;
 import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Log4j2

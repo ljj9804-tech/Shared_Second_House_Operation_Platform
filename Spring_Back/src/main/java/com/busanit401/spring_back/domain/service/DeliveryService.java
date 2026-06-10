@@ -1,6 +1,6 @@
-package com.busanit401.spring_back.service;
+package com.busanit401.spring_back.domain.service;
 
-import com.busanit401.spring_back.Repository.DeliveryOrderRepository;
+import com.busanit401.spring_back.domain.repository.DeliveryOrderRepository;
 import com.busanit401.spring_back.domain.DeliveryOrder;
 import com.busanit401.spring_back.dto.DeliveryOrderDTO;
 import lombok.RequiredArgsConstructor;
