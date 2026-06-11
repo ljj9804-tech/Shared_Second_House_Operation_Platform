@@ -17,7 +17,7 @@
 **.env.development.local
 **.env.production.local
 **/application.yml
-**/application.properties
+**/application-secret.properties
 
 # 3. 운영체제 임시 파일 제외
 .DS_Store
