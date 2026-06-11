@@ -83,17 +83,26 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(
+                                "/",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+
                                 "/oauth2/**",
                                 "/login/**",
+
                                 "/ws/**",
                                 "/api/users/find-username",
                                 "/api/users/find-password",
                                 "/api/users/google-login",
                                 "/api/users/kakao-login",
                                 "/api/users/refresh-token",
+
                                 "/app/**",
-                                "/topic/**").
-                        permitAll()
+                                "/topic/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
