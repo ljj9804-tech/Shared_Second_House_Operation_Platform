@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.6' // 사용하시는 버전에 맞게 유지
+	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -19,74 +19,80 @@ repositories {
 }
 
 dependencies {
-	// 1. 잘못된 스타터 이름 수정
+
+	// Spring Web
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// JPA
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-	// Lombok 설정
-	// 1. 잘못된 스타터 이름 수정
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 
-	// Lombok 설정
+	// OAuth2
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// Redisson (동시성 제어)
+	implementation 'org.redisson:redisson-spring-boot-starter:3.40.0'
+
+	// MariaDB
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+	// QueryDSL
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
 
-	// 테스트 스타터 수정
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
-	// 테스트 스타터 수정
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
-	// 2. QueryDSL (Spring Boot 3.x / 4.x 필수 설정)
-	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
-	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
-	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
-	// MariaDB
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+	// DevTools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-// Q클래스 생성 경로 설정
 def querydslDir = "src/main/generated"
 
 sourceSets {
-	main.java.srcDirs += [querydslDir]
+	main {
+		java {
+			srcDirs += [querydslDir]
+		}
+	}
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
 	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
 }
 
-clean.doLast {
-	file(querydslDir).deleteDir()
-
-	// 2. QueryDSL (Spring Boot 3.x / 4.x 필수 설정)
-	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
-	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
-	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
-	// MariaDB
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-}
-
-// Q클래스 생성 경로 설정
-def querydslDir = "src/main/generated"
-
-sourceSets {
-	main.java.srcDirs += [querydslDir]
-}
-
-tasks.withType(JavaCompile) {
-	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
-}
-
-clean.doLast {
-	file(querydslDir).deleteDir()
+clean {
+	delete file(querydslDir)
 }
 
 tasks.named('test') {
