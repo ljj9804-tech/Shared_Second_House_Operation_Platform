@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게스트 채팅방 웹소켓 테스트</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; background: #f9f9f9; margin-bottom: 10px; }
+        .input-group { margin-bottom: 10px; }
+        label { display: inline-block; width: 100px; }
+    </style>
+</head>
+<body>
+<h2>🚀 게스트 채팅 실시간 테스트 룸</h2>
+
+<div class="input-group">
+    <button onclick="connect()">🔌 1. 서버 연결 및 1번방 구독</button>
+    <span id="status" style="color: red; font-weight: bold; margin-left: 10px;">연결 끊김</span>
+</div>
+
+<hr>
+
+<div id="messages"></div>
+
+<div class="input-group">
+    <label>보낸이 이름:</label>
+    <input type="text" id="senderName" value="플러터게스트">
+</div>
+<div class="input-group">
+    <label>메시지 내용:</label>
+    <input type="text" id="messageContent" style="width: 300px;" value="안녕하세요! 실시간 웹소켓 대화 테스트입니다.">
+    <button onclick="sendMessage()">📤 전송</button>
+</div>
+
+<script>
+    let stompClient = null;
+    const roomId = 1; // 테스트할 방 번호
+
+    function connect() {
+        // WebSocketConfig에 설정한 엔드포인트로 웹소켓 생성
+        const socket = new WebSocket('ws://localhost:8080/ws-guest-chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            document.getElementById('status').innerText = "✅ 연결 및 구독 성공!";
+            document.getElementById('status').style.color = "green";
+            console.log('Connected: ' + frame);
+
+            // 3단계: /topic/guest/room/1 채널 구독 시작
+            stompClient.subscribe('/topic/guest/room/' + roomId, function (response) {
+                const msg = JSON.parse(response.body);
+                showOutput(msg);
+            });
+        }, function(error) {
+            alert('웹소켓 연결 실패: ' + error);
+        });
+    }
+
+    function sendMessage() {
+        if(!stompClient) {
+            alert('먼저 서버 연결 버튼을 눌러주세요!');
+            return;
+        }
+
+        const senderName = document.getElementById('senderName').value;
+        const content = document.getElementById('messageContent').value;
+
+        const chatDto = {
+            chatRoomId: roomId,
+            senderId: 2026,
+            senderName: senderName,
+            content: content
+        };
+
+        // 4단계: /app/guest/chat/send 로 DTO 메시지 발신
+        stompClient.send("/app/guest/chat/send", {}, JSON.stringify(chatDto));
+    }
+
+    function showOutput(message) {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML += `<p><strong>[${message.senderName}]:</strong> ${message.content}</p>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // 스크롤 최하단 이동
+    }
+</script>
+</body>
+</html>
