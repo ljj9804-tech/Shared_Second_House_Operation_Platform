@@ -7,13 +7,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; }
-        #messages { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; background: #f9f9f9; margin-bottom: 10px; }
+        #messages { border: 1px solid #ccc; height: 320px; overflow-y: scroll; padding: 10px; background: #f9f9f9; margin-bottom: 10px; }
         .input-group { margin-bottom: 10px; }
         label { display: inline-block; width: 100px; }
+        .msg-item { margin: 5px 0; padding: 5px; border-bottom: 1px dashed #eee; }
+        .btn-sm { margin-left: 5px; font-size: 11px; cursor: pointer; }
     </style>
 </head>
 <body>
-<h2>🚀 게스트 채팅 실시간 테스트 룸</h2>
+<h2>🚀 게스트 채팅 실시간 테스트 룸 (v2)</h2>
 
 <div class="input-group">
     <button onclick="connect()">🔌 1. 서버 연결 및 1번방 구독</button>
@@ -37,10 +39,9 @@
 <script>
     let stompClient = null;
     const roomId = 1; // 테스트할 방 번호
+    const currentUserId = 1; // 🟩 질문하신 User 테이블의 실제 존재하는 PK 1번 매핑 유지!
 
     function connect() {
-        // WebSocketConfig에 설정한 엔드포인트로 웹소켓 생성
-        // http://localhost:8080/ws-test.html
         const socket = new WebSocket('ws://localhost:8080/ws-guest-chat');
         stompClient = Stomp.over(socket);
 
@@ -49,7 +50,7 @@
             document.getElementById('status').style.color = "green";
             console.log('Connected: ' + frame);
 
-            // 3단계: /topic/guest/room/1 채널 구독 시작
+            // /topic/guest/room/1 채널 구독 시작
             stompClient.subscribe('/topic/guest/room/' + roomId, function (response) {
                 const msg = JSON.parse(response.body);
                 showOutput(msg);
@@ -59,6 +60,7 @@
         });
     }
 
+    // [1] 일반 메시지 전송 (TALK)
     function sendMessage() {
         if(!stompClient) {
             alert('먼저 서버 연결 버튼을 눌러주세요!');
@@ -69,19 +71,75 @@
         const content = document.getElementById('messageContent').value;
 
         const chatDto = {
+            type: "TALK", // ✨ 추가된 타입 식별자
             chatRoomId: roomId,
-            senderId: 2026,
+            senderId: currentUserId, // 1번 유저 바인딩
             senderName: senderName,
             content: content
         };
 
-        // 4단계: /app/guest/chat/send 로 DTO 메시지 발신
         stompClient.send("/app/guest/chat/send", {}, JSON.stringify(chatDto));
+        document.getElementById('messageContent').value = ''; // 발신 후 인풋 초기화
     }
 
+    // ✨ [2] 메시지 실시간 수정 요청 (EDIT)
+    function requestEdit(chatId) {
+        const newContent = prompt("수정할 내용을 입력하세요:");
+        if (!newContent) return;
+
+        const editDto = {
+            type: "EDIT",
+            chatId: chatId,
+            chatRoomId: roomId,
+            content: newContent
+        };
+
+        stompClient.send("/app/guest/chat/edit", {}, JSON.stringify(editDto));
+    }
+
+    // ✨ [3] 메시지 실시간 삭제 요청 (DELETE)
+    function requestDelete(chatId) {
+        if (!confirm("정말 이 메시지를 삭제하시겠습니까?")) return;
+
+        const deleteDto = {
+            type: "DELETE",
+            chatId: chatId,
+            chatRoomId: roomId
+        };
+
+        stompClient.send("/app/guest/chat/delete", {}, JSON.stringify(deleteDto));
+    }
+
+    // 🖥️ 수신된 데이터 분기 처리 및 화면 렌더링
     function showOutput(message) {
         const messagesDiv = document.getElementById('messages');
-        messagesDiv.innerHTML += `<p><strong>[${message.senderName}]:</strong> ${message.content}</p>`;
+
+        if (message.type === 'TALK') {
+            // 일반 대화 수신 시 태그 내부에 고유 ID(chatId)를 심어서 동적으로 추가합니다.
+            messagesDiv.innerHTML += `
+                <div class="msg-item" id="msg-${message.chatId}">
+                    <strong>[${message.senderName}]:</strong>
+                    <span class="txt-content">${message.content}</span>
+                    <button class="btn-sm" onclick="requestEdit(${message.chatId})">📝 수정</button>
+                    <button class="btn-sm" onclick="requestDelete(${message.chatId})">🗑️ 삭제</button>
+                </div>`;
+        }
+        else if (message.type === 'EDIT') {
+            // 수정 신호 수신 시 해당 chatId를 가진 DOM을 찾아 텍스트만 실시간 교체!
+            const targetMsg = document.getElementById(`msg-${message.chatId}`);
+            if (targetMsg) {
+                targetMsg.querySelector('.txt-content').innerText = message.content + " (수정됨)";
+                targetMsg.querySelector('.txt-content').style.color = "blue";
+            }
+        }
+        else if (message.type === 'DELETE') {
+            // 삭제 신호 수신 시 해당 chatId를 가진 엘리먼트를 화면에서 즉시 소멸!
+            const targetMsg = document.getElementById(`msg-${message.chatId}`);
+            if (targetMsg) {
+                targetMsg.remove();
+            }
+        }
+
         messagesDiv.scrollTop = messagesDiv.scrollHeight; // 스크롤 최하단 이동
     }
 </script>

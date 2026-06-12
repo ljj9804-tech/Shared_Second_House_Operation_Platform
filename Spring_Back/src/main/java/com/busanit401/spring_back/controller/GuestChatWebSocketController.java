@@ -26,7 +26,6 @@ public class GuestChatWebSocketController {
         guestChatService.saveMessage(
                 chatDto.getChatRoomId(),
                 chatDto.getSenderId(),
-                chatDto.getSenderName(),
                 chatDto.getContent()
         );
 
