@@ -40,6 +40,7 @@
 
     function connect() {
         // WebSocketConfig에 설정한 엔드포인트로 웹소켓 생성
+        // http://localhost:8080/ws-test.html
         const socket = new WebSocket('ws://localhost:8080/ws-guest-chat');
         stompClient = Stomp.over(socket);
 
