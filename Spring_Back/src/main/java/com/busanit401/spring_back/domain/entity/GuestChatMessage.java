@@ -1,5 +1,6 @@
 package com.busanit401.spring_back.domain.entity;
 
+import com.busanit401.spring_back.domain.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,20 +19,17 @@ public class GuestChatMessage {
     @Column(name = "guest_chat_message_id")
     private Long id;
 
-    // 대화가 소속된 채팅방 (Many-to-One 단방향 연관관계 추천)
+    // 대화가 소속된 채팅방
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guest_chat_room_id")
     private GuestChatRoom guestChatRoom;
 
-    // 메시지를 보낸 게스트(사용자)의 ID 혹은 이름
-    @Column(name = "sender_id", nullable = false)
-    private Long senderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false) // user 테이블의 user_id 외래키(FK) 지정
+    private User sender;
 
-    @Column(name = "sender_name", nullable = false)
-    private String senderName;
-
-    // 메시지 내용 (긴 텍스트를 고려해 굵은 내용도 커버 가능하도록 TEXT 타입 지정)
+    // 메시지 내용 (긴 텍스트를 고려해 TEXT 타입 지정)
     @Column(name = "message_content", nullable = false, columnDefinition = "TEXT")
     private String messageContent;
 
@@ -41,5 +39,12 @@ public class GuestChatMessage {
     @PrePersist
     protected void onCreate() {
         this.sentAt = LocalDateTime.now();
+    }
+
+    // ==============================================================================================
+    // ✨ [비즈니스 로직] 실시간 메시지 수정을 위한 도메인 메서드
+    // ==============================================================================================
+    public void updateContent(String newContent) {
+        this.messageContent = newContent;
     }
 }
