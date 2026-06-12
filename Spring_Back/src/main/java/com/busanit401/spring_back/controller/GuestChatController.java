@@ -3,6 +3,7 @@ package com.busanit401.spring_back.controller;
 import com.busanit401.spring_back.domain.entity.GuestChatMessage;
 import com.busanit401.spring_back.domain.entity.GuestChatRoom;
 import com.busanit401.spring_back.domain.service.GuestChatService;
+import com.busanit401.spring_back.dto.GuestChatDto;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.log4j.Log4j2;
@@ -35,9 +36,21 @@ public class GuestChatController {
      * GET http://localhost:8080/api/guest/chat/history/{chatRoomId}
      */
     @GetMapping("/history/{chatRoomId}")
-    public ResponseEntity<List<GuestChatMessage>> getChatHistory(@PathVariable("chatRoomId") Long chatRoomId) {
+    public ResponseEntity<List<GuestChatDto>> getChatHistory(@PathVariable("chatRoomId") Long chatRoomId) {
         log.info("[API GET] 과거 대화 내역 조회 요청 - 채팅방 ID: {}", chatRoomId);
+
         List<GuestChatMessage> history = guestChatService.getChatHistory(chatRoomId);
-        return ResponseEntity.ok(history);
+
+        List<GuestChatDto> dtoList = history.stream().map(msg -> GuestChatDto.builder()
+                .type("TALK")
+                .chatId(msg.getId())
+                .chatRoomId(chatRoomId)
+                .senderId(msg.getSender().getId())
+                .senderName(msg.getSender().getNickname())
+                .content(msg.getMessageContent())
+                .build()
+        ).toList();
+
+        return ResponseEntity.ok(dtoList);
     }
 }

@@ -48,9 +48,10 @@ public class GuestChatService {
                 });
     }
 
-    // 채팅방 입장 성공 시 과거 메시지 내역 조회 (기존 유지)
-    public List<GuestChatMessage> getChatHistory(Long guestChatRoomId) {
-        return guestChatMessageRepository.findByGuestChatRoomIdOrderBySentAtAsc(guestChatRoomId);
+    // 채팅방 입장 성공 시 과거 메시지 내역 조회 (Fetch Join 적용된 레포지토리와 매핑 규격 통일)
+    public List<GuestChatMessage> getChatHistory(Long chatRoomId) { // 🟩 변수명 chatRoomId로 통일
+        log.info("[Service] 과거 대화 내역 디비 조회 시작 - 방 ID: {}", chatRoomId);
+        return guestChatMessageRepository.findByGuestChatRoomIdOrderBySentAtAsc(chatRoomId);
     }
 
     // 실시간으로 수신된 메시지 DB 저장 (유저 엔티티 바인딩 교정)
