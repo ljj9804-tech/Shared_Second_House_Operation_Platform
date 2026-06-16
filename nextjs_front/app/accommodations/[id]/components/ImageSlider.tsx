@@ -10,7 +10,7 @@ interface ImageSliderProps {
 
 export default function ImageSlider({ imageUrl, name }: ImageSliderProps) {
   const images = imageUrl
-  ? imageUrl.split(',').map((url) => `${process.env.NEXT_PUBLIC_BASE_URL}${url.trim()}`)
+  ? imageUrl.split(',').map((url) => `${process.env.NEXT_PUBLIC_SERVER_URL}${url.trim()}`)
   : [];
   const [current, setCurrent] = useState(0);
 

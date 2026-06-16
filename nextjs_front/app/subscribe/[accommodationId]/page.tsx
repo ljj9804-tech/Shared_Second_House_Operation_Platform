@@ -41,7 +41,7 @@ export default function SubscribePage() {
 
   useEffect(() => {
     fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/accommodations/${accommodationId}`
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations/${accommodationId}`
     )
       .then((r) => r.json())
       .then((data) => {
@@ -78,7 +78,7 @@ export default function SubscribePage() {
 
     console.log('구독 신청 요청:', body);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waiting/apply/${leaderId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/waiting/apply/${leaderId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

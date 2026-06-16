@@ -34,7 +34,7 @@ export default function AccommodationCard({
 
   // 대표 이미지 (첫 번째 이미지)
   const firstImage = accommodation.imageUrl
-    ? `${process.env.NEXT_PUBLIC_BASE_URL}${accommodation.imageUrl.split(',')[0].trim()}`
+    ? `${process.env.NEXT_PUBLIC_SERVER_URL}${accommodation.imageUrl.split(',')[0].trim()}`
     : null;
 
   // 팀당 월세 계산
