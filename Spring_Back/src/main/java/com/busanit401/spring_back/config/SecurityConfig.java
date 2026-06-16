@@ -1,8 +1,11 @@
 package com.busanit401.spring_back.config;
 
+import com.busanit401.spring_back.security.auth.CustomUserDetailsService;
 import com.busanit401.spring_back.security.auth.JwtAuthenticationFilter;
 import com.busanit401.spring_back.security.auth.JwtFilter;
 import com.busanit401.spring_back.domain.service.TokenBlacklistService;
+import com.busanit401.spring_back.security.oauth.CustomOAuth2AuthenticationSuccessHandler;
+import com.busanit401.spring_back.security.oauth.CustomOAuth2UserService;
 import com.busanit401.spring_back.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +43,9 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtUtil jwtUtil;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOAuth2AuthenticationSuccessHandler customOAuth2AuthenticationSuccessHandler;
+
 
     @Bean
     public BCryptPasswordEncoder encoder() {
@@ -91,15 +97,13 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-
                                 "/oauth2/**",
                                 "/login/**",
-
                                 "/ws/**",
                                 "/api/users/find-username",
                                 "/api/users/find-password",
-                                "/api/users/google-login",
-                                "/api/users/kakao-login",
+//                                "/api/users/google-login",
+//                                "/api/users/naver-login",
                                 "/api/users/refresh-token",
                                 "/api/guest/chat/**", // 게스트챗 경로 추가
 
@@ -112,8 +116,11 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
-                        .defaultSuccessUrl("/", true)
-                );;
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService) // CustomOAuth2UserService 주입 필요
+                        )
+                        .successHandler(customOAuth2AuthenticationSuccessHandler) // 핸들러 등록
+                );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
