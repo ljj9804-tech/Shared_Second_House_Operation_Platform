@@ -89,6 +89,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(
+                                "/",
+                                "/ws-test.html", // 게스트챗 테스트용 경로(삭제 예정): http://localhost:8080/ws-test.html
+                                "/ws-guest-chat/**", // 게스트챗 테스트용 경로(삭제 예정)
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
@@ -102,9 +105,13 @@ public class SecurityConfig {
 //                                "/api/users/google-login",
 //                                "/api/users/naver-login",
                                 "/api/users/refresh-token",
+                                "/api/guest/chat/**", // 게스트챗 경로 추가
 
                                 "/app/**",
-                                "/topic/**"
+                                "/topic/**",
+
+                                "/favicon.ico",
+                                "/error"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

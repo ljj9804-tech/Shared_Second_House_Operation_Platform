@@ -3,25 +3,18 @@ package com.busanit401.spring_back.dto;
 import lombok.*;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
 public class GuestChatDto {
-
-    // 1. 대화가 오가는 채팅방의 고유 ID (어느 방으로 보낼지 구별)
-    private Long chatRoomId;
-
-    // 2. 메시지를 보낸 게스트의 회원 고유 ID
-    private Long senderId;
-
-    // 3. 채팅창에 표시될 보낸 사람의 이름 또는 닉네임
-    private String senderName;
-
-    // 4. 실시간으로 전송할 대화 내용 본문
-    private String content;
+    private String type;         // TALK, EDIT, DELETE
+    private Long chatId;         // 메시지 고유 번호 (수정/삭제의 열쇠)
+    private Long chatRoomId;     // 방 번호
+    private Long senderId;       // 보낸 사람 User ID
+    private String senderName;   // 보낸 사람 닉네임 (화면 표시용)
+    private String content;      // 메시지 내용
 }
-
 
 /*
  * ============================================================================
