@@ -113,53 +113,53 @@ class GuestChatService {
     print('🚀 [플러터 웹소켓] 메시지 발신 완료: $content');
   }
 
-  /// ✨ [3-1] 서버로 메시지 실시간 수정 요청 (상행선 - 수정)
-  void editMessage({
-    required int chatId,         // 어떤 메시지를 고칠지 고유 ID (디비 PK)
-    required int chatRoomId,
-    required String newContent,   // 새로 변경할 채팅 내용
-  }) {
-    if (_stompClient == null || !_isConnected) {
-      print('❌ [플러터 웹소켓] 서버와 연결되어 있지 않습니다.');
-      return;
-    }
-
-    Map<String, dynamic> editDto = {
-      'type': 'EDIT',            // ✨ 수정 타입 지정
-      'chatId': chatId,
-      'chatRoomId': chatRoomId,
-      'content': newContent,
-    };
-
-    _stompClient?.send(
-      destination: '/app/guest/chat/edit', // 백엔드 @MessageMapping("/guest/chat/edit")와 매핑
-      body: jsonEncode(editDto),
-    );
-    print('📝 [플러터 웹소켓] 메시지 수정 요청 완료 (ID: $chatId) -> $newContent');
-  }
-
-  /// ✨ [3-2] 서버로 메시지 실시간 삭제 요청 (상행선 - 삭제)
-  void deleteMessage({
-    required int chatId,         // 어떤 메시지를 지울지 고유 ID
-    required int chatRoomId,
-  }) {
-    if (_stompClient == null || !_isConnected) {
-      print('❌ [플러터 웹소켓] 서버와 연결되어 있지 않습니다.');
-      return;
-    }
-
-    Map<String, dynamic> deleteDto = {
-      'type': 'DELETE',          // ✨ 삭제 타입 지정
-      'chatId': chatId,
-      'chatRoomId': chatRoomId,
-    };
-
-    _stompClient?.send(
-      destination: '/app/guest/chat/delete', // 백엔드 @MessageMapping("/guest/chat/delete")와 매핑
-      body: jsonEncode(deleteDto),
-    );
-    print('🗑️ [플러터 웹소켓] 메시지 삭제 요청 완료 (ID: $chatId)');
-  }
+  // /// ✨ [3-1] 서버로 메시지 실시간 수정 요청 (상행선 - 수정)
+  // void editMessage({
+  //   required int chatId,         // 어떤 메시지를 고칠지 고유 ID (디비 PK)
+  //   required int chatRoomId,
+  //   required String newContent,   // 새로 변경할 채팅 내용
+  // }) {
+  //   if (_stompClient == null || !_isConnected) {
+  //     print('❌ [플러터 웹소켓] 서버와 연결되어 있지 않습니다.');
+  //     return;
+  //   }
+  //
+  //   Map<String, dynamic> editDto = {
+  //     'type': 'EDIT',            // ✨ 수정 타입 지정
+  //     'chatId': chatId,
+  //     'chatRoomId': chatRoomId,
+  //     'content': newContent,
+  //   };
+  //
+  //   _stompClient?.send(
+  //     destination: '/app/guest/chat/edit', // 백엔드 @MessageMapping("/guest/chat/edit")와 매핑
+  //     body: jsonEncode(editDto),
+  //   );
+  //   print('📝 [플러터 웹소켓] 메시지 수정 요청 완료 (ID: $chatId) -> $newContent');
+  // }
+  //
+  // /// ✨ [3-2] 서버로 메시지 실시간 삭제 요청 (상행선 - 삭제)
+  // void deleteMessage({
+  //   required int chatId,         // 어떤 메시지를 지울지 고유 ID
+  //   required int chatRoomId,
+  // }) {
+  //   if (_stompClient == null || !_isConnected) {
+  //     print('❌ [플러터 웹소켓] 서버와 연결되어 있지 않습니다.');
+  //     return;
+  //   }
+  //
+  //   Map<String, dynamic> deleteDto = {
+  //     'type': 'DELETE',          // ✨ 삭제 타입 지정
+  //     'chatId': chatId,
+  //     'chatRoomId': chatRoomId,
+  //   };
+  //
+  //   _stompClient?.send(
+  //     destination: '/app/guest/chat/delete', // 백엔드 @MessageMapping("/guest/chat/delete")와 매핑
+  //     body: jsonEncode(deleteDto),
+  //   );
+  //   print('🗑️ [플러터 웹소켓] 메시지 삭제 요청 완료 (ID: $chatId)');
+  // }
 
   /// [4] 채팅방을 나갈 때 연결 안전하게 해제
   void disconnect() {
