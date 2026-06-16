@@ -107,6 +107,12 @@ public class SecurityConfig {
                                 "/api/users/refresh-token",
                                 "/api/guest/chat/**", // 게스트챗 경로 추가
 
+
+                                // /api/주소는 모두다 회원검증 안하고 통과. test용
+                                "/api/**",
+
+                                "/uploads/**",
+
                                 "/app/**",
                                 "/topic/**",
 
