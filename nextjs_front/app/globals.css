@@ -1,26 +1,215 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #245b10;
+  --color-primary-hover: #1a4509;
+  --color-primary-light: #f0f7ec;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-danger-hover: #fecaca;
+  --color-danger-border: #fecaca;
+  --color-admin: #2563eb;
+  --color-admin-bg: #dbeafe;
+  --color-admin-hover: #bfdbfe;
+
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-text-muted: #888888;
+  --color-border: #e5e5e5;
+  --color-card-bg: #fafafa;
+
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  --max-width: 1200px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', Arial, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* [버튼 클래스 및 용도 정리]
+
+* btn-primary   : 주요 액션 (초록) - 구독하러가기, 예약하기, 신청하기
+* btn-disabled  : 비활성           - 승인데기중, 구독만료됨
+* btn-danger    : 취소/삭제 (빨간) - 예약취소, 팀원삭제
+* btn-secondary : 보조 액션        - 팀원추가, 더보기
+* btn-reset     : 초기화           - 달력 초기화
+* btn-outline   : 테두리만         - 목록으로 돌아가기, 취소
+* btn-admin     : 관리자 전용      - 승인, 반려 (관리자 담당 팀원)
+* btn-sm        : 작은 버튼        - 테이블 내 버튼 (관리자 화면)
+ */
+
+/* ===== 공통 버튼 스타일 ===== */
+/* Tailwind 리셋보다 높은 우선순위 적용 */
+
+@layer components {
+  /* 주요 버튼 (초록) */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-hover);
+  }
+
+  .btn-primary:disabled {
+    background-color: var(--color-border);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+  }
+
+  .btn-disabled {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--color-border);
+    color: var(--color-text-muted);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: not-allowed;
+  }
+
+  .btn-danger {
+    padding: 10px 20px;
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-danger:hover {
+    background-color: var(--color-danger-hover);
+  }
+
+  .btn-secondary {
+    padding: 10px 16px;
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    border: 1px dashed var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-primary);
+    color: white;
+  }
+
+  .btn-reset {
+    padding: 8px 16px;
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-reset:hover {
+    background-color: var(--color-danger-hover);
+  }
+
+  .btn-outline {
+    padding: 10px 20px;
+    background-color: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .btn-outline:hover {
+    background-color: var(--color-primary);
+    color: white;
+  }
+
+  .btn-admin {
+    padding: 8px 16px;
+    background-color: var(--color-admin-bg);
+    color: var(--color-admin);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-admin:hover {
+    background-color: var(--color-admin-hover);
+  }
+
+  .btn-sm {
+    padding: 6px 12px;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-sm:hover {
+    background-color: var(--color-primary-hover);
+  }
 }

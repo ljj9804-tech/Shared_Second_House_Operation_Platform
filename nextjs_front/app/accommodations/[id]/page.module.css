@@ -1,0 +1,110 @@
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+.loading {
+  text-align: center;
+  padding: 80px;
+  color: var(--color-text-muted);
+}
+
+.body {
+  display: flex;
+  gap: 40px;
+  padding: 40px 24px 0;
+  align-items: flex-start;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.description {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  line-height: 1.8;
+  margin-bottom: 40px;
+}
+
+/* 우측 고정 사이드바 */
+.sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+}
+
+.sidebarInner {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  background-color: var(--color-background);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebarTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.selectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.selectLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-background);
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.priceWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 16px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.priceLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.price {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.priceUnit {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
