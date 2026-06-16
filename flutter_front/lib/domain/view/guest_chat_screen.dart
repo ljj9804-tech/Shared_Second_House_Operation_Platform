@@ -51,27 +51,27 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
       onMessageReceived: (Map<String, dynamic> incomingMessage) {
         if (!mounted) return;
 
-        // 🟩 [핵심 수정] 실시간 수신 데이터의 Type(TALK/EDIT/DELETE)에 따른 화면 동적 제어
+        // 🟩 [주석 처리 반영] 현재는 일반 대화(TALK)만 처리하므로 분기 로직은 백업 주석화
         final String type = incomingMessage['type'] ?? 'TALK';
-        final int targetChatId = incomingMessage['chatId'] ?? 0;
+        // final int targetChatId = incomingMessage['chatId'] ?? 0;
 
         setState(() {
           if (type == 'TALK') {
             // 일반 대화는 리스트에 순수 추가
             _messages.add(incomingMessage);
           }
+          /* [일정 단축으로 인한 수정/삭제 기능 일시 주석 처리]
           else if (type == 'EDIT') {
-            // 수정 이벤트 수신 시 리스트에서 해당 chatId를 가진 메시지의 본문을 교체
             final index = _messages.indexWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
             if (index != -1) {
               _messages[index]['content'] = incomingMessage['content'];
-              _messages[index]['messageContent'] = incomingMessage['content']; // 과거내역 변수 대응
+              _messages[index]['messageContent'] = incomingMessage['content'];
             }
           }
           else if (type == 'DELETE') {
-            // 삭제 이벤트 수신 시 리스트에서 해당 메시지를 완전히 소멸
             _messages.removeWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
           }
+          */
         });
         _scrollToBottom();
       },
@@ -93,7 +93,7 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
     _chatService.sendMessage(
       chatRoomId: widget.chatRoomId,
       senderId: widget.currentUserId,
-      senderName: widget.currentUserName, // 이름 추가 전달
+      senderName: widget.currentUserName,
       content: text,
     );
 
@@ -110,9 +110,9 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
     }
   }
 
-  /// 🛠️ 옵션 모달창 키 매핑 교정
+  /* [일정 단축으로 인한 수정/삭제 모달 및 익스텐션 UI 관련 메서드 전체 주석 처리]
   void _showChatOptions(BuildContext context, Map<String, dynamic> chat) {
-    final int messageId = chat['chatId'] ?? chat['id'] ?? 0; // 🟩 새 DTO 키 바인딩
+    final int messageId = chat['chatId'] ?? chat['id'] ?? 0;
     final String currentText = chat['content'] ?? chat['messageContent'] ?? '';
 
     showModalBottomSheet(
@@ -171,7 +171,6 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
     );
   }
 
-  /// 🔄 [수정] 임시 팝업 대신 우리가 고도화한 서비스 단의 실시간 웹소켓 수정 메서드 연결!
   void _processEditMessage(int messageId, String newContent) {
     if (newContent.isEmpty) return;
     _chatService.editMessage(
@@ -181,13 +180,13 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
     );
   }
 
-  /// 🗑️ [수정] 임시 팝업 대신 서비스 단의 실시간 웹소켓 삭제 메서드 연결!
   void _processDeleteMessage(int messageId) {
     _chatService.deleteMessage(
       chatId: messageId,
       chatRoomId: widget.chatRoomId,
     );
   }
+  */
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 150), () {
@@ -231,7 +230,6 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
                 final String senderId = (chat['senderId'] ?? chat['sender_id'] ?? '').toString();
                 final bool isMe = (myId == senderId);
 
-                // 🟩 GuestChatDto 명세 규칙에 일치하도록 최우선순위 Key 변경
                 final String messageContent = chat['content'] ?? chat['messageContent'] ?? '내용 없음';
                 final String senderName = chat['senderName'] ?? '게스트';
 
@@ -258,8 +256,9 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
                         const SizedBox(width: 6),
                       ],
 
+                      // 🟩 [교정 완료] onLongPress 진입로를 null로 차단하여 롱클릭 모달창이 뜨지 않도록 완전 방어
                       GestureDetector(
-                        onLongPress: isMe ? () => _showChatOptions(context, chat) : null,
+                        onLongPress: null,
                         child: Column(
                           crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                           children: [
