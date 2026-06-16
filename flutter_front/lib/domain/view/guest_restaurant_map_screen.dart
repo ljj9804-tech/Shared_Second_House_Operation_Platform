@@ -73,7 +73,8 @@ class _GuestRestaurantMapScreenState extends State<GuestRestaurantMapScreen> {
   }
 
   /// 🍽️ 말풍선 탭 시 상세 열기 (크롬 커스텀탭)
-  /// 웹 구글맵 경로형 '/@위도,경도,줌z' 포맷으로 줌 17 적용해서 연다.
+  /// Places API가 내려준 정식 장소 URL(googleMapsUri, place_id 포함)을 그대로 연다.
+  /// 직접 좌표로 URL을 만들면 동명의 엉뚱한 가게가 잡히거나 지도만 떠서 사용하지 않는다.
   Future<void> _openPlace(PlaceDto p) async {
     final url = p.googleMapsUri;
     if (url.isEmpty) {
@@ -83,12 +84,7 @@ class _GuestRestaurantMapScreenState extends State<GuestRestaurantMapScreen> {
       return;
     }
 
-    const int zoomLevel = 17;
-    final uri = Uri.parse(
-      'https://www.google.com/maps/place/'
-      '${Uri.encodeComponent(p.name)}'
-      '/@${p.latitude},${p.longitude},${zoomLevel}z',
-    );
+    final uri = Uri.parse(url);
 
     // 크롬 커스텀탭으로 열기 (앱 위 오버레이, 시스템 뒤로가기로 지도 복귀)
     // 구글맵 앱으로 가로채여 열리는 걸 막기 위해 다른 외부 앱으로는 폴백하지 않는다.

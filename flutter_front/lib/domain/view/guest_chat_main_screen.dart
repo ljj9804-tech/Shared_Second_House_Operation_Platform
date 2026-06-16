@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'guest_chat_screen.dart'; // 💡 기존에 만든 채팅 화면과 연결
+import 'guest_chat_bot_screen.dart'; // 🤖 챗봇 화면 연결
+// 맛집 화면으로 전환 시 아래 import 주석을 해제하세요.
+import 'guest_restaurant_map_screen.dart';
 
 class GuestChatMainScreen extends StatefulWidget {
   const GuestChatMainScreen({super.key});
@@ -167,8 +170,21 @@ class _GuestChatMainScreenState extends State<GuestChatMainScreen> {
                   // 🤖 챗봇 버튼
                   ElevatedButton.icon(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Gemini RAG 기반 QnA 챗봇을 준비 중입니다.')),
+                      // 🤖 챗봇 버튼: 누르면 챗봇 화면으로 이동
+                      // Provider는 main.dart에 전역 등록되어 있어 별도 주입이 필요 없다.
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => const GuestChatBotScreen(),
+                      //   ),
+                      // );
+
+                      // 🍽️ 맛집 화면으로 가려면 위 챗봇 이동 코드를 주석 처리하고 아래 주석을 해제하세요.
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GuestRestaurantMapScreen(),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(

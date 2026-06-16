@@ -174,19 +174,19 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
   /// 🔄 [수정] 임시 팝업 대신 우리가 고도화한 서비스 단의 실시간 웹소켓 수정 메서드 연결!
   void _processEditMessage(int messageId, String newContent) {
     if (newContent.isEmpty) return;
-    _chatService.editMessage(
-      chatId: messageId,
-      chatRoomId: widget.chatRoomId,
-      newContent: newContent,
-    );
+    // _chatService.editMessage(
+    //   chatId: messageId,
+    //   chatRoomId: widget.chatRoomId,
+    //   newContent: newContent,
+    // );
   }
 
   /// 🗑️ [수정] 임시 팝업 대신 서비스 단의 실시간 웹소켓 삭제 메서드 연결!
   void _processDeleteMessage(int messageId) {
-    _chatService.deleteMessage(
-      chatId: messageId,
-      chatRoomId: widget.chatRoomId,
-    );
+    // _chatService.deleteMessage(
+    //   chatId: messageId,
+    //   chatRoomId: widget.chatRoomId,
+    // );
   }
 
   void _scrollToBottom() {
