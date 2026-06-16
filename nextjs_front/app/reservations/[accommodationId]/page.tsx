@@ -39,9 +39,9 @@ export default function ReservationPage() {
   useEffect(() => {
     Promise.all([
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/my/${userId}`
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/subscriptions/my/${userId}`
       ).then((r) => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/reservations`).then(
+      fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/reservations`).then(
         (r) => r.json()
       ),
     ])
@@ -99,7 +99,7 @@ export default function ReservationPage() {
 
     console.log('[ReservationPage] 예약 생성 요청:', body);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/reservations`, {
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/reservations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

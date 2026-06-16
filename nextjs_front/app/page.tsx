@@ -13,7 +13,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/accommodations`)
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations`)
       .then((r) => r.json())
       .then((data) => {
         console.log('[Home] 숙소 목록:', data);
@@ -46,7 +46,7 @@ export default function Home() {
                 <div className={styles.imageWrap}>
                   {accommodation.imageUrl ? (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_BASE_URL}${accommodation.imageUrl.split(',')[0].trim()}`}
+                      src={`${process.env.NEXT_PUBLIC_SERVER_URL}${accommodation.imageUrl.split(',')[0].trim()}`}
                       alt={accommodation.name}
                       className={styles.image}
                     />

@@ -46,7 +46,7 @@ export default function AccommodationsPage() {
 
   useEffect(() => {
     // GET /api/stay/accommodations
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/accommodations`)
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations`)
       .then((res) => res.json())
       .then((data) => {
         setAccommodations(data);
