@@ -101,6 +101,12 @@ public class SecurityConfig {
                                 "/api/users/refresh-token",
                                 "/api/**",
 
+
+                                // /api/주소는 모두다 회원검증 안하고 통과. test용
+                                "/api/**",
+
+                                "/uploads/**",
+
                                 "/app/**",
                                 "/topic/**"
                         ).permitAll()
