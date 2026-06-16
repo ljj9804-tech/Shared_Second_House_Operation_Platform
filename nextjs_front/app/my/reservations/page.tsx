@@ -20,7 +20,7 @@ export default function MyReservationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/reservations`)
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/reservations`)
       .then((r) => r.json())
       .then((data) => {
         console.log('내 예약 목록:', data);
@@ -35,7 +35,7 @@ export default function MyReservationsPage() {
     if (!confirm('예약을 취소할까요?')) return;
 
     fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/reservations/${id}/cancel`,
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/reservations/${id}/cancel`,
       {
         method: 'PATCH',
       }
