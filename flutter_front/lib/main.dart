@@ -122,7 +122,10 @@ import 'package:flutter/material.dart';
 // }
 
 // 테스트용 임시 main ======================================
+import 'package:provider/provider.dart';
 import 'domain/view/guest_chat_main_screen.dart';
+import 'domain/controller/chat_bot_controller.dart'; // 🤖 챗봇 상태 컨트롤러
+import 'domain/controller/restaurant_controller.dart'; // 🍽️ 맛집 상태 컨트롤러
 
 void main() {
   runApp(const MyApp());
@@ -133,15 +136,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Shared Second House',
-      debugShowCheckedModeBanner: false, // 디버그 마크 숨기기
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-        useMaterial3: true,
+    // 🌐 앱 전역에서 사용할 Provider들을 최상단에 등록한다.
+    // 이렇게 하면 어느 화면에서든 별도 주입 없이 컨트롤러를 구독할 수 있다.
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ChatBotController()),
+        ChangeNotifierProvider(create: (_) => RestaurantController()),
+      ],
+      child: MaterialApp(
+        title: 'Shared Second House',
+        debugShowCheckedModeBanner: false, // 디버그 마크 숨기기
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+          useMaterial3: true,
+        ),
+        // ⭐ 여기를 방금 만든 메인 테스트 화면으로 지정합니다!
+        home: const GuestChatMainScreen(),
       ),
-      // ⭐ 여기를 방금 만든 메인 테스트 화면으로 지정합니다!
-      home: const GuestChatMainScreen(),
     );
   }
 }
