@@ -4,31 +4,20 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { StayAccommodationDto } from './accommodations/page';
-import { StayFaqDto } from './accommodations/[id]/page';
-import FaqSection from './accommodations/[id]/components/FaqSection';
 
 export default function Home() {
   const router = useRouter();
   const [accommodations, setAccommodations] = useState<StayAccommodationDto[]>(
     []
   );
-  const [faqs, setFaqs] = useState<StayFaqDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/accommodations`).then(
-        (r) => r.json()
-      ),
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/faqs`).then((r) =>
-        r.json()
-      ),
-    ])
-      .then(([accommodationsData, faqsData]) => {
-        console.log('[Home] 숙소 목록:', accommodationsData);
-        console.log('[Home] FAQ:', faqsData);
-        setAccommodations(accommodationsData);
-        setFaqs(faqsData);
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/accommodations`)
+      .then((r) => r.json())
+      .then((data) => {
+        console.log('[Home] 숙소 목록:', data);
+        setAccommodations(data);
       })
       .catch((err) => console.log('[Home] 데이터 조회 실패:', err))
       .finally(() => setLoading(false));
@@ -45,9 +34,6 @@ export default function Home() {
           <div className={styles.loading}>불러오는 중...</div>
         ) : (
           <div className={styles.grid}>
-            {/* 전체 보여주기 */}
-            {/* {accommodations.map((accommodation) => ( */}
-            {/* 3개만 보여주기 */}
             {accommodations.slice(0, 3).map((accommodation) => (
               <div
                 key={accommodation.id}
@@ -105,12 +91,6 @@ export default function Home() {
           </button>
         </div>
       </section>
-
-      {/* FAQ 섹션 */}
-      {/* <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>자주 묻는 질문</h2>
-        <FaqSection faqs={faqs} showTitle={false} />
-      </section> */}
     </div>
   );
 }
