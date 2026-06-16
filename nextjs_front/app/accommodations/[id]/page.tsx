@@ -65,13 +65,13 @@ export default function AccommodationDetailPage() {
     // 병렬 API 호출
     Promise.all([
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/accommodations/${id}`
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations/${id}`
       ).then((r) => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stay/stories/${id}`).then(
+      fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/stories/${id}`).then(
         (r) => r.json()
       ),
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/my/${userId}`
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/subscriptions/my/${userId}`
       ).then((r) => r.json()),
     ])
       .then(([accommodationData, storiesData, subscriptionData]) => {

@@ -30,7 +30,7 @@ export default function StorySection({ stories }: StorySectionProps) {
           {story.imageUrl && (
             <div className={styles.imageWrap}>
               <img
-                src={`${process.env.NEXT_PUBLIC_BASE_URL}${story.imageUrl}`}
+                src={`${process.env.NEXT_PUBLIC_SERVER_URL}${story.imageUrl}`}
                 alt={story.title}
                 className={styles.image}
               />
