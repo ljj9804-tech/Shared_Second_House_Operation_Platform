@@ -1,0 +1,103 @@
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.loading {
+  text-align: center;
+  padding: 80px;
+  color: var(--color-text-muted);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.empty {
+  text-align: center;
+  padding: 80px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  box-shadow: var(--shadow-card);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.accommodationName {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.statusConfirmed {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.statusCancelled {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background-color: var(--color-card-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.address {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+.dates {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dateItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dateLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.dateValue {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.dateDivider {
+  color: var(--color-primary);
+  font-size: var(--font-size-lg);
+}
