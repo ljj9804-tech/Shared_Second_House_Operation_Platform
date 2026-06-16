@@ -74,7 +74,7 @@ public class User extends BaseTimeEntity {
                 .password(userRequest.getPassword())
                 .nickname(userRequest.getNickname())
                 .email(userRequest.getEmail())
-                .role(Role.User)
+                .role(userRequest.getRole())
                 .build();
     }
 
@@ -87,7 +87,7 @@ public class User extends BaseTimeEntity {
                 .email(request.getEmail())
                 .nickname(request.getNickname())
                 .phoneNumber(request.getPhoneNumber())
-                .role(Role.SOCIAL)
+                .role(request.getRole())
                 .build();
     }
 

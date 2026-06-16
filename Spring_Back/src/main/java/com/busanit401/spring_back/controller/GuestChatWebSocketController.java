@@ -1,6 +1,5 @@
 package com.busanit401.spring_back.controller;
 
-import com.busanit401.spring_back.domain.entity.GuestChatMessage;
 import com.busanit401.spring_back.domain.service.GuestChatService;
 import com.busanit401.spring_back.dto.GuestChatDto;
 import lombok.RequiredArgsConstructor;
@@ -9,34 +8,33 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+
 @Log4j2
 @Controller
 @RequiredArgsConstructor
 public class GuestChatWebSocketController {
 
     private final GuestChatService guestChatService;
-    private final SimpMessagingTemplate messagingTemplate; // 스프Interactive 실시간 메시지 발송기
+    private final SimpMessagingTemplate messagingTemplate; // 스프링이 제공하는 실시간 메시지 발송기
 
     @MessageMapping("/guest/chat/send") // 실제 플러터 발신 주소: /app/guest/chat/send
     public void broadcastMessage(GuestChatDto chatDto) {
         log.info("[🚀 실시간 웹소켓] 메시지 도착 - 방: {}, 보낸이: {}, 내용: {}",
                 chatDto.getChatRoomId(), chatDto.getSenderName(), chatDto.getContent());
 
-        // [행동 1] 🟩 수신된 대화를 DB에 저장하고, 저장된 결과를 변수(savedMessage)에 담습니다.
-        GuestChatMessage savedMessage = guestChatService.saveMessage(
+        // [행동 1] 수신된 대화 내용을 DB에 영구 저장 (서비스 호출)
+        guestChatService.saveMessage(
                 chatDto.getChatRoomId(),
                 chatDto.getSenderId(),
+                chatDto.getSenderName(),
                 chatDto.getContent()
         );
 
-        // [행동 2] 🟩 DB가 생성해 준 진짜 메세지 고유 번호(Id)를 배달통에 심어줍니다. (수정/삭제용)
-        chatDto.setChatId(savedMessage.getId());
-
-        // [행동 3] 대화가 일어난 특정 방의 주소 조립
+        // [행동 2] 대화가 일어난 특정 방의 주소 조립
         // 예시 주소: /topic/guest/room/1
         String destination = "/topic/guest/room/" + chatDto.getChatRoomId();
 
-        // [행동 4] 그 방에 모여있는 모든 사용자들에게 DTO 배달 가방을 실시간 PUSH! (중복 코드 제거 완료)
+        // [행동 3] 그 방에 모여있는 모든 사용자들에게 DTO 배달 가방을 실시간 PUSH!
         messagingTemplate.convertAndSend(destination, chatDto);
 
         log.info("[📢 브로드캐스팅 완료] 목적지: {} -> 실시간 전송 성공", destination);

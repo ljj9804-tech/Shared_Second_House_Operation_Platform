@@ -89,6 +89,13 @@ dependencies {
 
 	// Validation
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// Lucene (BM25 검색 + 한국어 Nori 분석기 + 자동완성 Suggester) — Java 17이므로 9.x 사용
+	implementation 'org.apache.lucene:lucene-core:9.12.0'
+	implementation 'org.apache.lucene:lucene-analysis-nori:9.12.0'
+	implementation 'org.apache.lucene:lucene-suggest:9.12.0'
 }
 
 tasks.named('test') {
