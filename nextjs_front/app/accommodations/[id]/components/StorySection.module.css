@@ -1,0 +1,42 @@
+.section {
+  margin-bottom: 48px;
+}
+
+.storyItem {
+  margin-bottom: 64px;
+}
+
+.storyItem:last-child {
+  margin-bottom: 0;
+}
+
+.storyTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--color-foreground);
+}
+
+.orderNum {
+  color: var(--color-primary);
+  margin-right: 8px;
+}
+
+.storyContent {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  line-height: 1.8;
+  margin-bottom: 24px;
+}
+
+.imageWrap {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
