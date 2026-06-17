@@ -1,14 +1,18 @@
+buildscript {
+	ext {
+		queryDslVersion = "5.0.0"
+	}
+}
+
 plugins {
 	id 'java'
-	// Java 17과 호환 안정성 이슈
-	// id 'org.springframework.boot' version '4.0.6'에서 버전 하향 조정하였습니다
-	id 'org.springframework.boot' version '3.4.3'
+	id 'org.springframework.boot' version '3.5.13'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
-group = 'com.busanIt401'
+group = 'com.busanit401'
 version = '0.0.1-SNAPSHOT'
-description = 'Spring_Back'
+description = 'REST-API-Boot-Flutter-React'
 
 java {
 	toolchain {
@@ -21,56 +25,90 @@ repositories {
 }
 
 dependencies {
-	// Lombok 설정
+	// Spring Web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// MariaDB
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
+	// JWT (버전 0.11.5)
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+	// QueryDSL (5.0.0)
+	implementation "com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta"
+	annotationProcessor(
+			"jakarta.persistence:jakarta.persistence-api",
+			"jakarta.annotation:jakarta.annotation-api",
+			"com.querydsl:querydsl-apt:${queryDslVersion}:jakarta"
+	)
+
+	// ModelMapper & Gson
+	implementation 'org.modelmapper:modelmapper:3.1.0'
+	implementation 'com.google.code.gson:gson:2.11.0'
+
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-
-	// Web & 공통 도구
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-	// 테스트 스타터 수정
-	// [채팅 기능] WebSocket 및 STOMP 지원
-	// 플러그인 설치 권장 메세지 발생 시 설치하시는걸 권장합니다(디코 일반 채널 참조)
-	implementation 'org.springframework.boot:spring-boot-starter-websocket'
-
-	// [데이터 저장] JPA 및 H2 데이터베이스
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
-	// runtimeOnly 'com.h2database:h2' 테스트용 데이터베이스에서 위 라이브러리로 대체
-
-	// 테스트 환경 설정
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
-	// 2. QueryDSL (Spring Boot 3.x / 4.x 필수 설정)
-	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
-	annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
-	annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+	// DevTools
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-	// Swagger 접속 주소: http://localhost:8080/swagger-ui/index.html
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-}
+	// 추가 라이브러리 ────────────────────────────────────────────────────────────────
+	// Swagger (SpringDoc OpenAPI)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.3'
 
-// Q클래스 생성 경로 설정
-def querydslDir = "src/main/generated"
+	// WebSocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
-sourceSets {
-	main.java.srcDirs += [querydslDir]
-}
+	// Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-tasks.withType(JavaCompile) {
-	options.getGeneratedSourceOutputDirectory().set(file(querydslDir))
-}
+	// Redisson (동시성 제어)
+	implementation 'org.redisson:redisson-spring-boot-starter:3.40.0'
 
-clean.doLast {
-	file(querydslDir).deleteDir()
+	// OAuth2(소셜 로그인 기능에 필요한 라이브러리 추가)
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// Lucene (BM25 검색 + 한국어 Nori 분석기 + 자동완성 Suggester) — Java 17이므로 9.x 사용
+	implementation 'org.apache.lucene:lucene-core:9.12.0'
+	implementation 'org.apache.lucene:lucene-analysis-nori:9.12.0'
+	implementation 'org.apache.lucene:lucene-suggest:9.12.0'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+sourceSets {
+
+	main {
+		java {
+			srcDirs = ["$projectDir/src/main/java", "$projectDir/build/generated"]
+		}
+	}
+}
+
+compileJava.dependsOn('clean')

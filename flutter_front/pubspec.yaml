@@ -14,6 +14,16 @@ dependencies:
   # External Libraries (라이브러리 추가 시 알파벳 순으로 정렬하세요)
   # --------------------------------------------------------------
   cupertino_icons: ^1.0.8 # iOS 스타일(아이폰)의 기본 아이콘 팩
+  dio: ^5.4.3
+  google_maps_flutter: ^2.6.0 # 구글 지도 위젯 (맛집 지도 화면)
+  http: ^1.2.0 # REST API(HTTP)호출 라이브러리
+  intl: ^0.19.0 #날짜, 시간, 숫자, 통화 표기법 자동으로 변환(날짜 및 시간 포맷팅에 사용예정)
+  provider: ^6.1.2 # 상태관리 (챗봇/지도 화면)
+  stomp_dart_client: ^3.0.1 # STOMP 웹소켓 통신을 위한 플러터 최적화 라이브러리
+  url_launcher: ^6.2.6 # 외부 URL/지도 앱 실행
+  flutter_dotenv: ^5.2.1        # .env 환경변수 관리
+  kakao_map_plugin: ^0.4.0      # 카카오맵
+  table_calendar: ^3.1.2        # 예약 캘린더
 
 dev_dependencies:
   # [개발용 의존성] 테스트를 위한 라이브러리
@@ -29,7 +39,8 @@ flutter:
   # --------------------------------------------------------------
   # Assets & Fonts (추후 필요할 때 주석을 풀고 사용하세요)
   # --------------------------------------------------------------
-  # assets:
+  assets:
+    - .env
   #   - assets/images/
   #   - assets/icons/
 
