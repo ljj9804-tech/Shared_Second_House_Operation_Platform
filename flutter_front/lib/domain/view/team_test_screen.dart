@@ -111,12 +111,13 @@ class TeamTestScreen extends StatelessWidget {
 
           // ── 진주 파트 ────────────────────────────
           const _SectionLabel('진주 - 게스트 채팅방'),
-          _TestTile(
-            icon: Icons.chat_outlined,
-            title: '채팅 메인',
-            subtitle: '채팅방 목록 · AI챗봇 · 맛집 진입 허브',
-            onTap: () => _go(context, const GuestChatMainScreen()),
-          ),
+          // _TestTile(
+          //   icon: Icons.chat_outlined,
+          //   title: '채팅 메인',
+          //   subtitle: '채팅방 목록 · AI챗봇 · 맛집 진입 허브',
+          //   onTap: () => _go(context, const GuestChatMainScreen()),
+          // ),
+          //
           _TestTile(
             icon: Icons.chat_bubble_outline,
             title: '게스트 채팅방',
@@ -126,7 +127,7 @@ class TeamTestScreen extends StatelessWidget {
               const GuestChatScreen(
                 chatRoomId: 1,
                 currentUserId: 100,
-                currentUserName: '홍길동',
+                currentUserName: 'string'
               ),
             ),
           ),

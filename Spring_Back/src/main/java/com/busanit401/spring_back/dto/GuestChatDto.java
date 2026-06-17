@@ -1,5 +1,6 @@
 package com.busanit401.spring_back.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 @Getter
@@ -7,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @ToString
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GuestChatDto {
 
     // 1. 대화가 오가는 채팅방의 고유 ID (어느 방으로 보낼지 구별)

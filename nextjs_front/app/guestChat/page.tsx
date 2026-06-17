@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef, Suspense } from "react"; // 🟩 Suspense 추가
+import { useEffect, useState, useRef, Suspense } from "react";
 import { Client } from "@stomp/stompjs";
 
 interface ChatMessage {
@@ -9,21 +9,19 @@ interface ChatMessage {
   chatRoomId: number;
   senderId: number;
   senderName: string;
-  content: string;
+  content?: string;
   sentAt?: string;
-  messageContent?: string;
   writer?: string;
   senderNickname?: string;
   userName?: string;
 }
 
-// 🟩 [해결 핵심] 실제 채팅방 본체 컴포넌트
 function GuestChatContent() {
   const searchParams = useSearchParams();
   const chatRoomId = Number(searchParams.get("roomId"));
 
-  const currentUserId = 100;
-  const currentUserName = "넥스트게스트";
+  const senderId = 100;
+  const senderName = "string2";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
@@ -101,25 +99,17 @@ function GuestChatContent() {
       return;
     }
 
-    // 🟩 현재 웹소켓 연결 상태를 콘솔에 찍어봅니다.
-    console.log("🔗 현재 STOMP 클라이언트 객체:", stompClientRef.current);
-    console.log(
-      "🟢 현재 웹소켓 연결 상태(connected):",
-      stompClientRef.current?.connected,
-    );
-
     if (!stompClientRef.current?.connected) {
       console.error(
         "❌ 에러: 웹소켓이 아직 서버와 연결되지 않은 상태입니다! 발송을 차단합니다.",
       );
-      return; // ⚠️ 여기서 튕겨 나가고 있었을 확률이 99%입니다.
+      return;
     }
 
     const chatDto = {
-      type: "TALK",
       chatRoomId: chatRoomId,
-      senderId: currentUserId,
-      senderName: currentUserName,
+      senderId: senderId,
+      senderName: senderName,
       content: text,
     };
 
@@ -159,9 +149,9 @@ function GuestChatContent() {
         </p>
 
         {messages.map((msg, index) => {
-          const isMe = msg.senderId === currentUserId;
-          const displayContent =
-            msg.content || msg.messageContent || "내용 없음";
+          const isMe = msg.senderId === senderId;
+
+          const displayContent = msg.content || "내용 없음";
 
           return (
             <div
@@ -177,7 +167,6 @@ function GuestChatContent() {
               >
                 {!isMe && (
                   <div className="text-xs font-bold text-[#23399D] mb-1">
-                    {/* 🟩 any 없이 깔끔하고 안전하게 이름 필드 검사 */}
                     {msg.senderName ||
                       msg.writer ||
                       msg.senderNickname ||
@@ -227,8 +216,6 @@ function GuestChatContent() {
   );
 }
 
-// 🟩 Next.js가 최초에 낚아채는 대문 대장 함수 (Default Export)
-// useSearchParams를 안전하게 감싸기 위해 Suspense로 본체를 보조합니다.
 export default function GuestChatRoomPage() {
   return (
     <Suspense
