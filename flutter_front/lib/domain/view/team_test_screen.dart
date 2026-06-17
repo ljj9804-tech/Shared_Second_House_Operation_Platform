@@ -47,12 +47,12 @@ class TeamTestScreen extends StatelessWidget {
 
           // ── 혜은 파트 ──────────────────────────────────────
           const _SectionLabel('혜은hyen — Stay (숙소 / 예약)'),
-          _TestTile(
-            icon: Icons.home_outlined,
-            title: '홈 화면',
-            subtitle: '숙소 배너 · 가로 스크롤 카드 목록',
-            onTap: () => _go(context, const StayHomeScreen()),
-          ),
+          // _TestTile(
+          //   icon: Icons.home_outlined,
+          //   title: '홈 화면',
+          //   subtitle: '숙소 배너 · 가로 스크롤 카드 목록',
+          //   onTap: () => _go(context, const StayHomeScreen()),
+          // ),
           _TestTile(
             icon: Icons.list_alt,
             title: '숙소 목록',
@@ -65,12 +65,12 @@ class TeamTestScreen extends StatelessWidget {
           //   subtitle: 'ID 1번 숙소 상세 페이지',
           //   onTap: () => _go(context, const StayAccommodationDetailScreen(accommodationId: 1)),
           // ),
-          // _TestTile(
-          //   icon: Icons.calendar_month_outlined,
-          //   title: '내 예약 목록',
-          //   subtitle: '예약 카드 · 취소 기능',
-          //   onTap: () => _go(context, const StayMyReservationScreen()),
-          // ),
+          _TestTile(
+            icon: Icons.calendar_month_outlined,
+            title: '내 예약 목록',
+            subtitle: '예약 카드 · 취소 기능',
+            onTap: () => _go(context, const StayMyReservationScreen()),
+          ),
           _TestTile(
             icon: Icons.date_range_outlined,
             title: '예약 캘린더',
