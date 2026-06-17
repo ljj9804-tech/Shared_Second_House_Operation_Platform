@@ -25,6 +25,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ChatBotController()),
         ChangeNotifierProvider(create: (_) => RestaurantController()),
       ],
+
       child: MaterialApp(
         title: '세컨하우스 - 팀 테스트',
         debugShowCheckedModeBanner: false,
