@@ -40,7 +40,7 @@ class TeamTestScreen extends StatelessWidget {
             icon: Icons.home,
             title: '통합 메인 화면',
             subtitle: '홈 · 내 예약 · AI 챗봇 (바텀 네비 포함)',
-            onTap: () => _go(context, const MainScreen()),
+            onTap: () => _go(context, const MainScreen() as Widget),
           ),
 
           const SizedBox(height: 16),
@@ -168,6 +168,10 @@ class TeamTestScreen extends StatelessWidget {
   void _go(BuildContext context, Widget screen) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
+}
+
+class MainScreen {
+  const MainScreen();
 }
 
 class _SectionLabel extends StatelessWidget {
