@@ -10,6 +10,7 @@ interface ChatMessage {
   senderId: number;
   senderName: string;
   content?: string;
+  messageContent?: string;
   sentAt?: string;
   writer?: string;
   senderNickname?: string;
@@ -93,8 +94,8 @@ function GuestChatContent() {
 
   // 4. 발신
   const handleSendMessage = () => {
-    const text = inputText.trim();
-    if (!text || !chatRoomId) {
+    const content = inputText.trim();
+    if (!content || !chatRoomId) {
       console.log("⚠️ 텍스트가 비어있거나 방 번호가 없습니다.");
       return;
     }
@@ -110,7 +111,7 @@ function GuestChatContent() {
       chatRoomId: chatRoomId,
       senderId: senderId,
       senderName: senderName,
-      content: text,
+      content: content,
     };
 
     stompClientRef.current.publish({
@@ -151,7 +152,8 @@ function GuestChatContent() {
         {messages.map((msg, index) => {
           const isMe = msg.senderId === senderId;
 
-          const displayContent = msg.content || "내용 없음";
+          const displayContent =
+            msg.content || msg.messageContent || "내용 없음";
 
           return (
             <div
