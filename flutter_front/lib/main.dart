@@ -9,13 +9,25 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter App',
-      theme: ThemeData(
-        useMaterial3: true,
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => StayAccommodationController()),
+        ChangeNotifierProvider(create: (_) => StayReservationController()),
+        ChangeNotifierProvider(create: (_) => ChatBotController()),
+        ChangeNotifierProvider(create: (_) => RestaurantController()),
+      ],
+
+      child: MaterialApp(
+        title: '세컨하우스 - 팀 테스트',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+          useMaterial3: true,
+          scaffoldBackgroundColor: AppColors.background,
+        ),
+        home: const TeamTestScreen(),
+        // TODO [팀 병합 시]: home 대신 AppRouter() 사용
       ),
       home: const TeamTestScreen(), //작업중: 테스트용 스크린 사용, 이후 main_screen.dart파일 경로로 수정
     );
