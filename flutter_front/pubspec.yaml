@@ -21,6 +21,9 @@ dependencies:
   provider: ^6.1.2 # 상태관리 (챗봇/지도 화면)
   stomp_dart_client: ^3.0.1 # STOMP 웹소켓 통신을 위한 플러터 최적화 라이브러리
   url_launcher: ^6.2.6 # 외부 URL/지도 앱 실행
+  flutter_dotenv: ^5.2.1        # .env 환경변수 관리
+  kakao_map_plugin: ^0.4.0      # 카카오맵
+  table_calendar: ^3.1.2        # 예약 캘린더
 
 dev_dependencies:
   # [개발용 의존성] 테스트를 위한 라이브러리
@@ -36,7 +39,8 @@ flutter:
   # --------------------------------------------------------------
   # Assets & Fonts (추후 필요할 때 주석을 풀고 사용하세요)
   # --------------------------------------------------------------
-  # assets:
+  assets:
+    - .env
   #   - assets/images/
   #   - assets/icons/
 

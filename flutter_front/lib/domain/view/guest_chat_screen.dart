@@ -173,18 +173,18 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
 
   void _processEditMessage(int messageId, String newContent) {
     if (newContent.isEmpty) return;
-    _chatService.editMessage(
-      chatId: messageId,
-      chatRoomId: widget.chatRoomId,
-      newContent: newContent,
-    );
+    // _chatService.editMessage(
+    //   chatId: messageId,
+    //   chatRoomId: widget.chatRoomId,
+    //   newContent: newContent,
+    // );
   }
 
   void _processDeleteMessage(int messageId) {
-    _chatService.deleteMessage(
-      chatId: messageId,
-      chatRoomId: widget.chatRoomId,
-    );
+    // _chatService.deleteMessage(
+    //   chatId: messageId,
+    //   chatRoomId: widget.chatRoomId,
+    // );
   }
   */
 

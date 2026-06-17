@@ -1,8 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 구글 지도 타일/맛집 API 통신을 위한 인터넷 권한 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="flutter_front"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- 🗺️ 구글 지도 SDK API 키 (값은 local.properties의 MAPS_API_KEY에서 주입됨) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

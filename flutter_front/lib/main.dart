@@ -1,4 +1,6 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
+import 'domain/service/delivery_service.dart'; // 방금 만든 서비스 임포트
 
 // void main() {
 //   runApp(const MyApp());
@@ -122,27 +124,155 @@ import 'package:flutter/material.dart';
 // }
 
 // 테스트용 임시 main ======================================
-import 'domain/view/guest_chat_main_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_front/common/constants/app_colors.dart';
+import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
+import 'package:flutter_front/domain/controller/restaurant_controller.dart';
+import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
+import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
+import 'package:flutter_front/domain/view/team_test_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+// TODO [팀 병합 시]: 아래 주석 해제 후 위 import 제거
+// import 'package:flutter_front/config/app_router.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  await initializeDateFormatting('ko_KR', null);
 
   @override
   Widget build(BuildContext context) {
+    seonggyu
     return MaterialApp(
-      title: 'Shared Second House',
-      debugShowCheckedModeBanner: false, // 디버그 마크 숨기기
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
-        useMaterial3: true,
-      ),
-      // ⭐ 여기를 방금 만든 메인 테스트 화면으로 지정합니다!
-      home: const GuestChatMainScreen(),
+      title: '배달 프로젝트 리더 전용 앱',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const DeliveryTestScreen(),
     );
   }
 }
+
+class DeliveryTestScreen extends StatefulWidget {
+  const DeliveryTestScreen({super.key});
+
+  @override
+  State<DeliveryTestScreen> createState() => _DeliveryTestScreenState();
+}
+
+class _DeliveryTestScreenState extends State<DeliveryTestScreen> {
+  final DeliveryService _deliveryService = DeliveryService();
+  String _currentStatus = "주문 대기 중";
+  bool _isLoading = false;
+
+  // 버튼 누를 때 실행할 비동기 핸들러 함수
+  void _changeStatus(int orderId, String targetStatus) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    // 서버로 배송 상태 변경 요청 전송!
+    bool success = await _deliveryService.updateDeliveryStatus(orderId, targetStatus);
+
+    setState(() {
+      _isLoading = false;
+      if (success) {
+        _currentStatus = targetStatus;
+      } else {
+        _currentStatus = "통신 실패 ❌ (도커나 서버를 확인하세요!)";
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("🚚 배달 주문 상태 제어판"),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "현재 [6번 주문] 배달 상태",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+
+              // 현재 상태 표시 텍스트
+              Text(
+                _currentStatus,
+                style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: _currentStatus == "배송중" ? Colors.orange : Colors.green
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              if (_isLoading) const CircularProgressIndicator(),
+
+              if (!_isLoading) ...[
+                // 1. 배송중으로 변경하는 버튼
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                    onPressed: () => _changeStatus(6, "배송중"),
+                    icon: const Icon(Icons.delivery_dining, color: Colors.white),
+                    label: const Text("배송 시작하기 (배송중)", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // 2. 배송완료로 변경하는 버튼
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: () => _changeStatus(6, "배송완료"),
+                    icon: const Icon(Icons.check_circle, color: Colors.white),
+                    label: const Text("배송 완료 처리", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                ),
+              ]
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+    // 🌐 앱 전역에서 사용할 Provider들을 최상단에 등록한다.
+    // 이렇게 하면 어느 화면에서든 별도 주입 없이 컨트롤러를 구독할 수 있다.
+    return MultiProvider(
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => StayAccommodationController()),
+        ChangeNotifierProvider(create: (_) => StayReservationController()),
+        ChangeNotifierProvider(create: (_) => ChatBotController()),
+        ChangeNotifierProvider(create: (_) => RestaurantController()),
+      ],
+      child: MaterialApp(
+        title: '세컨하우스 - 팀 테스트',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
+          useMaterial3: true,
+          scaffoldBackgroundColor: AppColors.background,
+        ),
+        home: const TeamTestScreen(),
+        // TODO [팀 병합 시]: home 대신 AppRouter() 사용
+      ),
+    ),
+  );
+}
 // 테스트용 임시 main ======================================
+middle
