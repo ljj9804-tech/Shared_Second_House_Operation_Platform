@@ -124,17 +124,23 @@ import 'domain/service/delivery_service.dart'; // 방금 만든 서비스 임포
 // }
 
 // 테스트용 임시 main ======================================
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-import 'domain/view/guest_chat_main_screen.dart';
-import 'domain/controller/chat_bot_controller.dart'; // 🤖 챗봇 상태 컨트롤러
-import 'domain/controller/restaurant_controller.dart'; // 🍽️ 맛집 상태 컨트롤러
+import 'package:flutter_front/common/constants/app_colors.dart';
+import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
+import 'package:flutter_front/domain/controller/restaurant_controller.dart';
+import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
+import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
+import 'package:flutter_front/domain/view/team_test_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+// TODO [팀 병합 시]: 아래 주석 해제 후 위 import 제거
+// import 'package:flutter_front/config/app_router.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  await initializeDateFormatting('ko_KR', null);
 
   @override
   Widget build(BuildContext context) {
@@ -243,26 +249,30 @@ class _DeliveryTestScreenState extends State<DeliveryTestScreen> {
     );
   }
 }
-=======
     // 🌐 앱 전역에서 사용할 Provider들을 최상단에 등록한다.
     // 이렇게 하면 어느 화면에서든 별도 주입 없이 컨트롤러를 구독할 수 있다.
     return MultiProvider(
+  runApp(
+    MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => StayAccommodationController()),
+        ChangeNotifierProvider(create: (_) => StayReservationController()),
         ChangeNotifierProvider(create: (_) => ChatBotController()),
         ChangeNotifierProvider(create: (_) => RestaurantController()),
       ],
       child: MaterialApp(
-        title: 'Shared Second House',
-        debugShowCheckedModeBanner: false, // 디버그 마크 숨기기
+        title: '세컨하우스 - 팀 테스트',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
           useMaterial3: true,
+          scaffoldBackgroundColor: AppColors.background,
         ),
-        // ⭐ 여기를 방금 만든 메인 테스트 화면으로 지정합니다!
-        home: const GuestChatMainScreen(),
+        home: const TeamTestScreen(),
+        // TODO [팀 병합 시]: home 대신 AppRouter() 사용
       ),
-    );
-  }
+    ),
+  );
 }
 // 테스트용 임시 main ======================================
 middle
