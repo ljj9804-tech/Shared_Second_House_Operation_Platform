@@ -1,0 +1,22 @@
+.footer {
+  background-color: var(--color-card-bg);
+  border-top: 1px solid var(--color-border);
+  padding: 40px 24px;
+}
+
+.footerInner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.footerBrand {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+}
+
+.footerText {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
