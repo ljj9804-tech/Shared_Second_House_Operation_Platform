@@ -6,6 +6,8 @@ package com.busanit401.spring_back.domain.service;
 import com.busanit401.spring_back.domain.entity.StayAccommodation;
 import com.busanit401.spring_back.domain.repository.StayAccommodationPriceRepository;
 import com.busanit401.spring_back.domain.repository.StayAccommodationRepository;
+import com.busanit401.spring_back.exception.BusinessException;
+import com.busanit401.spring_back.exception.ErrorCode;
 import com.busanit401.spring_back.dto.StayAccommodationPriceDto;
 import com.busanit401.spring_back.dto.StayAccommodationRequestDto;
 import com.busanit401.spring_back.dto.StayAccommodationResponseDto;
@@ -50,7 +52,9 @@ public class StayAccommodationServiceImpl implements StayAccommodationService {
     public StayAccommodationResponseDto getAccommodation(Long id) {
         log.info("숙소 상세 조회 시작 - id: {}", id);
         StayAccommodation accommodation = accommodationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + id));
+                // [TODO] GlobalExceptionHandler가 다른 멤버 파일이라 RuntimeException 메시지가 플러터로 전달 안 됨
+                // .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAY_ACCOMMODATION_NOT_FOUND, " id: " + id));
         List<StayAccommodationPriceDto> prices = getCommonPrices();
         log.info("숙소 상세 조회 완료 - name: {}", accommodation.getName());
         return StayAccommodationResponseDto.from(accommodation, prices);
@@ -90,7 +94,9 @@ public class StayAccommodationServiceImpl implements StayAccommodationService {
     public StayAccommodationResponseDto updateAccommodation(Long id, StayAccommodationRequestDto requestDto) {
         log.info("숙소 수정 시작 - id: {}", id);
         StayAccommodation accommodation = accommodationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + id));
+                // [TODO] GlobalExceptionHandler가 다른 멤버 파일이라 RuntimeException 메시지가 플러터로 전달 안 됨
+                // .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAY_ACCOMMODATION_NOT_FOUND, " id: " + id));
         accommodation.update(requestDto);
         StayAccommodation saved = accommodationRepository.save(accommodation);
         List<StayAccommodationPriceDto> prices = getCommonPrices();
@@ -104,7 +110,9 @@ public class StayAccommodationServiceImpl implements StayAccommodationService {
     public void deleteAccommodation(Long id) {
         log.info("숙소 삭제 시작 - id: {}", id);
         accommodationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + id));
+                // [TODO] GlobalExceptionHandler가 다른 멤버 파일이라 RuntimeException 메시지가 플러터로 전달 안 됨
+                // .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAY_ACCOMMODATION_NOT_FOUND, " id: " + id));
         accommodationRepository.deleteById(id);
         log.info("숙소 삭제 완료 - id: {}", id);
     }

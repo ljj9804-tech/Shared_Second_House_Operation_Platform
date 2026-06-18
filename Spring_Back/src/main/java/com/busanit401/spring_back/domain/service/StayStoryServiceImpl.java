@@ -9,6 +9,8 @@ import com.busanit401.spring_back.domain.repository.StayAccommodationRepository;
 import com.busanit401.spring_back.domain.repository.StayStoryRepository;
 import com.busanit401.spring_back.dto.StayStoryRequestDto;
 import com.busanit401.spring_back.dto.StayStoryResponseDto;
+import com.busanit401.spring_back.exception.BusinessException;
+import com.busanit401.spring_back.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -42,8 +44,10 @@ public class StayStoryServiceImpl implements StayStoryService {
     @Transactional
     public StayStoryResponseDto createStory(StayStoryRequestDto requestDto) {
         log.info("스토리 등록 시작 - accommodationId: {}", requestDto.getAccommodationId());
+        // [TODO] GlobalExceptionHandler가 다른 멤버 파일이라 RuntimeException 메시지가 플러터로 전달 안 됨
+        // .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + requestDto.getAccommodationId()));
         StayAccommodation accommodation = accommodationRepository.findById(requestDto.getAccommodationId())
-                .orElseThrow(() -> new RuntimeException("숙소를 찾을 수 없습니다. id: " + requestDto.getAccommodationId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAY_ACCOMMODATION_NOT_FOUND, " id: " + requestDto.getAccommodationId()));
 
         StayStory story = StayStory.builder()
                 .stayAccommodation(accommodation)
@@ -64,7 +68,9 @@ public class StayStoryServiceImpl implements StayStoryService {
     public StayStoryResponseDto updateStory(Long id, StayStoryRequestDto requestDto) {
         log.info("스토리 수정 시작 - id: {}", id);
         StayStory story = storyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("스토리를 찾을 수 없습니다. id: " + id));
+                // [TODO] GlobalExceptionHandler가 다른 멤버 파일이라 RuntimeException 메시지가 플러터로 전달 안 됨
+                // .orElseThrow(() -> new RuntimeException("스토리를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAY_STORY_NOT_FOUND, " id: " + id));
 
         story.update(requestDto);
 
@@ -79,7 +85,9 @@ public class StayStoryServiceImpl implements StayStoryService {
     public void deleteStory(Long id) {
         log.info("스토리 삭제 시작 - id: {}", id);
         storyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("스토리를 찾을 수 없습니다. id: " + id));
+                // [TODO] GlobalExceptionHandler가 다른 멤버 파일이라 RuntimeException 메시지가 플러터로 전달 안 됨
+                // .orElseThrow(() -> new RuntimeException("스토리를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAY_STORY_NOT_FOUND, " id: " + id));
         storyRepository.deleteById(id);
         log.info("스토리 삭제 완료 - id: {}", id);
     }
