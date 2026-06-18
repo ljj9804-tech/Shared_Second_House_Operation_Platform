@@ -98,7 +98,6 @@ class GuestChatService {
     }
 
     Map<String, dynamic> chatDto = {
-      'type': 'TALK',
       'chatRoomId': chatRoomId,
       'senderId': senderId,
       'senderName': senderName,

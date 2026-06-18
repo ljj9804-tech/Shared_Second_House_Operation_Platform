@@ -51,28 +51,28 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
       onMessageReceived: (Map<String, dynamic> incomingMessage) {
         if (!mounted) return;
 
-        // 🟩 [주석 처리 반영] 현재는 일반 대화(TALK)만 처리하므로 분기 로직은 백업 주석화
-        final String type = incomingMessage['type'] ?? 'TALK';
-        // final int targetChatId = incomingMessage['chatId'] ?? 0;
-
-        setState(() {
-          if (type == 'TALK') {
-            // 일반 대화는 리스트에 순수 추가
-            _messages.add(incomingMessage);
-          }
-          /* [일정 단축으로 인한 수정/삭제 기능 일시 주석 처리]
-          else if (type == 'EDIT') {
-            final index = _messages.indexWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
-            if (index != -1) {
-              _messages[index]['content'] = incomingMessage['content'];
-              _messages[index]['messageContent'] = incomingMessage['content'];
-            }
-          }
-          else if (type == 'DELETE') {
-            _messages.removeWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
-          }
-          */
-        });
+        // // 🟩 [주석 처리 반영] 현재는 일반 대화(TALK)만 처리하므로 분기 로직은 백업 주석화
+        // final String type = incomingMessage['type'] ?? 'TALK';
+        // // final int targetChatId = incomingMessage['chatId'] ?? 0;
+        //
+        // setState(() {
+        //   if (type == 'TALK') {
+        //     // 일반 대화는 리스트에 순수 추가
+        //     _messages.add(incomingMessage);
+        //   }
+        //   /* [일정 단축으로 인한 수정/삭제 기능 일시 주석 처리]
+        //   else if (type == 'EDIT') {
+        //     final index = _messages.indexWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
+        //     if (index != -1) {
+        //       _messages[index]['content'] = incomingMessage['content'];
+        //       _messages[index]['messageContent'] = incomingMessage['content'];
+        //     }
+        //   }
+        //   else if (type == 'DELETE') {
+        //     _messages.removeWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
+        //   }
+        //   */
+        // });
         _scrollToBottom();
       },
     );
