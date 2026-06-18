@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_front/domain/controller/restaurant_controller.dart';
+import 'package:flutter_front/domain/dto/place_dto.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/widget/bottom_sheet_selector.dart';
@@ -9,6 +12,7 @@ import 'package:flutter_front/domain/dto/stay_story_dto.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_subscription_apply_screen.dart';
 import 'package:flutter_front/util/price_calculator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StayAccommodationDetailScreen extends StatefulWidget {
   final int accommodationId;
@@ -24,29 +28,46 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
   int _months = 1;
   int _teams = 1;
   final ScrollController _scrollController = ScrollController();
+  GoogleMapController? _mapController;
   bool _showTitle = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StayAccommodationController>().loadAccommodationDetail(widget.accommodationId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await context
+          .read<StayAccommodationController>()
+          .loadAccommodationDetail(widget.accommodationId);
+      if (!mounted) return;
+      final accommodation =
+          context.read<StayAccommodationController>().selectedAccommodation;
+      if (accommodation != null) {
+        // 내 DB(sh_restaurant)에서 이 숙소 부근 맛집을 읽어온다 (구글 동기화는 서버 스케줄러 담당)
+        context
+            .read<RestaurantController>()
+            .loadRestaurants(accommodationId: widget.accommodationId);
+      }
     });
+
     _scrollController.addListener(() {
       final shouldShow = _scrollController.offset > 220;
       if (shouldShow != _showTitle) setState(() => _showTitle = shouldShow);
     });
   }
 
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<StayAccommodationController>();
+    final controller = context.watch<RestaurantController>();
 
     if (ctrl.isLoadingDetail) {
       return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
@@ -75,7 +96,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
                 const Divider(height: 1),
                 _buildAmenities(item),
                 const Divider(height: 1),
-                _buildMapPlaceholder(item),
+                _buildMapPlaceholder(item, controller),
                 const Divider(height: 1),
                 _buildStories(ctrl.stories),
                 const SizedBox(height: 100),
@@ -330,7 +351,11 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
     );
   }
 
-  Widget _buildMapPlaceholder(StayAccommodationDto item) {
+  Widget _buildMapPlaceholder(StayAccommodationDto item, RestaurantController controller) {
+    final houseLatLng = (item.latitude != null && item.longitude != null)
+        ? LatLng(item.latitude!, item.longitude!)
+        : null;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -342,31 +367,99 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
             children: [
               const Icon(Icons.location_on_outlined, size: 16, color: Colors.black45),
               const SizedBox(width: 4),
+              // 주소가 길어 공간이 모자라면 흐르는(마퀴) 효과
               Expanded(
-                child: Text(item.address, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                child: _MarqueeText(
+                  item.address,
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                ),
               ),
+              // 🏠 숙소 위치로 버튼 (주소 오른쪽, 좌표 있을 때만)
+              if (houseLatLng != null) ...[
+                const SizedBox(width: 8),
+                _recenterButton(houseLatLng),
+              ],
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.map_outlined, size: 48, color: Colors.grey),
-                  SizedBox(height: 8),
-                  Text('지도 준비 중', style: TextStyle(color: Colors.grey)),
-                ],
+          if (houseLatLng == null)
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('지도 정보가 없습니다.', style: TextStyle(color: Colors.black54)),
+              ),
+            )
+          else
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: houseLatLng,
+                        zoom: 15,
+                      ),
+                      markers: _buildMarkers(controller.places, houseLatLng),
+                      myLocationButtonEnabled: false,
+                      mapToolbarEnabled: false,
+                      onMapCreated: (c) => _mapController = c,
+                    ),
+                    if (controller.isLoading)
+                      Container(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: AppColors.primary),
+                        ),
+                      ),
+                    if (controller.error != null && !controller.isLoading)
+                      Container(
+                        color: Colors.grey.shade100,
+                        child: Center(
+                          child: Text(
+                            controller.error!,
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
+      ),
+    );
+  }
+
+  /// 지도 중심을 숙소 좌표로 되돌리는 흰색 버튼
+  Widget _recenterButton(LatLng target) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      elevation: 3,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(target, 15),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            '🏠 숙소 위치로',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF333333),
+              fontSize: 12,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -495,6 +588,151 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
     return price.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (m) => '${m[1]},',
+    );
+  }
+
+  /// 🍽️ 숙소 + 맛집 마커 묶음 생성
+  Set<Marker> _buildMarkers(List<PlaceDto> places, LatLng houseLatLng) {
+    final markers = <Marker>{
+      // 숙소 마커
+      Marker(
+        markerId: const MarkerId('house'),
+        position: houseLatLng,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        infoWindow: const InfoWindow(title: '🏠 숙소', snippet: '세컨하우스'),
+      ),
+    };
+
+    for (final p in places) {
+      final rank = p.popularityRank;
+      final hue = (rank == null || rank < 10)
+        ? BitmapDescriptor.hueRed   // 상위
+        : BitmapDescriptor.hueOrange;  // 나머지
+      markers.add(
+         Marker(
+          markerId: MarkerId(p.id),
+          position: LatLng(p.latitude, p.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            hue
+          ),
+          infoWindow: InfoWindow(
+            title: p.name,
+            snippet: _buildSnippet(p),
+            onTap: () => _openPlace(p), // 말풍선 탭 → 크롬 커스텀탭으로 상세
+          ),
+        ),
+      );
+    }
+    return markers;
+  }
+
+  /// 🍽️ 말풍선 탭 시 상세 열기 (크롬 커스텀탭)
+  /// Places API가 내려준 정식 장소 URL(googleMapsUri, place_id 포함)을 그대로 연다.
+  /// 직접 좌표로 URL을 만들면 동명의 엉뚱한 가게가 잡히거나 지도만 떠서 사용하지 않는다.
+  Future<void> _openPlace(PlaceDto p) async {
+    final url = p.googleMapsUri;
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('상세 정보 주소가 없어요. 😢')),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(url);
+
+    // 크롬 커스텀탭으로 열기 (앱 위 오버레이, 시스템 뒤로가기로 지도 복귀)
+    // 구글맵 앱으로 가로채여 열리는 걸 막기 위해 다른 외부 앱으로는 폴백하지 않는다.
+    bool launched = false;
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('크롬 브라우저가 필요해요. 크롬을 설치해 주세요. 🌐')),
+      );
+    }
+  }
+
+  /// 마커 말풍선 요약 (한 줄로 짧게 — 길면 기본 InfoWindow가 말줄임 처리됨)
+  String _buildSnippet(PlaceDto p) {
+    final parts = <String>[
+      if (p.primaryType != null && p.primaryType!.isNotEmpty) p.primaryType!,
+      if (_todayHours(p) != null) '🕐 ${_todayHours(p)}',
+    ];
+    return parts.isEmpty ? '탭하면 상세보기' : parts.join(' · ');
+  }
+
+  /// 오늘 요일 영업시간만 추출 (weekdayDescriptions의 "월요일: 오전 11:00~..." → "오전 11:00~...")
+  String? _todayHours(PlaceDto p) {
+    if (p.weekdayDescriptions.isEmpty) return null;
+    const days = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+    final today = days[DateTime.now().weekday - 1]; // weekday: 1=월 ~ 7=일
+    for (final d in p.weekdayDescriptions) {
+      if (d.startsWith(today)) {
+        final idx = d.indexOf(': '); // "월요일: " 접두어 제거
+        return idx >= 0 ? d.substring(idx + 2) : d;
+      }
+    }
+    return null;
+  }
+
+}
+
+/// 텍스트가 가로 공간을 넘치면 좌우로 흐르게(마퀴) 보여주는 위젯. 넘치지 않으면 그냥 표시.
+class _MarqueeText extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+  const _MarqueeText(this.text, {this.style});
+
+  @override
+  State<_MarqueeText> createState() => _MarqueeTextState();
+}
+
+class _MarqueeTextState extends State<_MarqueeText> {
+  final ScrollController _controller = ScrollController();
+  bool _looping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startIfOverflow());
+  }
+
+  Future<void> _startIfOverflow() async {
+    if (_looping || !_controller.hasClients) return;
+    if (_controller.position.maxScrollExtent <= 0) return; // 안 넘치면 스크롤 안 함
+    _looping = true;
+    while (mounted && _controller.hasClients) {
+      final max = _controller.position.maxScrollExtent;
+      if (max <= 0) break;
+      final ms = (max * 25).toInt() + 1; // 거리에 비례한 속도
+      await _controller.animateTo(max,
+          duration: Duration(milliseconds: ms), curve: Curves.linear);
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted || !_controller.hasClients) break;
+      await _controller.animateTo(0,
+          duration: Duration(milliseconds: ms), curve: Curves.linear);
+      await Future.delayed(const Duration(milliseconds: 700));
+    }
+    _looping = false;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _controller,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Text(widget.text, maxLines: 1, style: widget.style),
     );
   }
 }

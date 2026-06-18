@@ -1,56 +1,258 @@
-'use client';
+"use client";
 
-import Script from 'next/script';
-import styles from './LocationMap.module.css';
+import styles from "./LocationMap.module.css";
+import { useEffect, useState } from "react";
+import {
+  AdvancedMarker,
+  APIProvider,
+  ControlPosition,
+  InfoWindow,
+  Map,
+  MapControl,
+  Pin,
+  useMap,
+} from "@vis.gl/react-google-maps";
+
+interface PlaceDto {
+  id: string;
+  name: string;
+  primaryType?: string | null;
+  phoneNumber?: string | null;
+  latitude: number;
+  longitude: number;
+  googleMapsUri?: string;
+  weekdayDescriptions?: string[];
+  accommodationId?: number | null;
+  popularityRank?: number | null; // 인기도 순위 (0이 가장 인기, 없으면 null)
+}
 
 interface LocationMapProps {
-  address: string;
+  accommodationId: number;
   latitude: number;
   longitude: number;
 }
 
-export default function LocationMap({ address, latitude, longitude }: LocationMapProps) {
+export default function LocationMap({
+  accommodationId,
+  latitude,
+  longitude,
+}: LocationMapProps) {
+  const [places, setPlaces] = useState<PlaceDto[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceDto | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const initMap = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kakao = (window as any).kakao;
-    if (!kakao || !kakao.maps) return;
+  useEffect(() => {
+    async function fetchRestaurants() {
+      try {
+        // 내 DB에 저장된 숙소별 맛집 조회 (구글 호출은 백엔드 /sync에서 별도 수행)
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/places/restaurants?accommodationId=${accommodationId}`,
+        );
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setPlaces(data);
+      } catch {
+        setError("맛집 정보를 가져오지 못했어요. 😢");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchRestaurants();
+  }, [accommodationId]);
 
-    kakao.maps.load(() => {
-      const container = document.getElementById('kakao-map');
-      if (!container) return;
+  return (
+    <div className={styles.screen}>
+      <header className={styles.appBar}>주변 맛집</header>
 
-      const options = {
-        center: new kakao.maps.LatLng(latitude, longitude),
-        level: 3,
-      };
+      <div className={styles.mapWrap}>
+        {/* 1. API 키 설정 */}
+        <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY || ""}>
+          {/* 2. 지도 띄우기 */}
+          <Map
+            defaultCenter={{ lat: latitude, lng: longitude }}
+            defaultZoom={15}
+            disableDefaultUI={true} // 기존의 구글 기본 버튼들(로드뷰 등) 한방에 숨기기
+            className={styles.map}
+            mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || "DEMO_MAP_ID"}
+            gestureHandling={"greedy"} //인삿말 안하기
+            scrollwheel={false} // 1. 휠로 확대되는 건 끈다! (스크롤 방해 금지)
+            zoomControl={true} // 3. 👈 확대/축소 (+, -) 버튼 딱 이거 하나만 우측 하단에 띄운다!
+          >
+            {/* 🏠 숙소 마커 (파란색으로 강조) */}
+            <AdvancedMarker
+              position={{ lat: latitude, lng: longitude }}
+              title="🏠 숙소"
+            >
+              <Pin
+                background="#4285F4"
+                borderColor="#1a73e8"
+                glyphColor="#ffffff"
+              />
+            </AdvancedMarker>
 
-      const map = new kakao.maps.Map(container, options);
-      const markerPosition = new kakao.maps.LatLng(latitude, longitude);
-      const marker = new kakao.maps.Marker({ position: markerPosition });
-      marker.setMap(map);
+            {/* 🍽️ 맛집 마커들 — 순위로 색 구분 (상위 빨강 / 10등~ 주황) */}
+            {places.map((p) => {
+              const rank = p.popularityRank;
+              const isTop = rank == null || rank < 10; // 상위(또는 순위 없음)
+              return (
+                <AdvancedMarker
+                  key={p.id}
+                  position={{ lat: p.latitude, lng: p.longitude }}
+                  title={p.name}
+                  onClick={() => setSelectedPlace(p)} // 클릭하면 이 맛집을 선택!
+                >
+                  <Pin
+                    background={isTop ? "#EA4335" : "#FB8C00"}
+                    borderColor={isTop ? "#C5221F" : "#E07B00"}
+                    glyphColor="#ffffff"
+                  />
+                </AdvancedMarker>
+              );
+            })}
 
-      const infowindow = new kakao.maps.InfoWindow({
-        content: `<div style="padding:6px 10px; font-size:13px;">${address}</div>`,
-      });
-      infowindow.open(map, marker);
+            {/* 💬 마커 클릭 시 나타날 말풍선 (InfoWindow) */}
+            {selectedPlace && (
+              <InfoWindow
+                position={{
+                  lat: selectedPlace.latitude,
+                  lng: selectedPlace.longitude,
+                }}
+                onCloseClick={() => setSelectedPlace(null)} // 닫기 버튼 누르면 초기화
+              >
+                <div
+                  style={{
+                    padding: "4px",
+                    fontSize: "13px",
+                    maxWidth: "220px",
+                    color: "#000",
+                  }}
+                >
+                  <strong>{selectedPlace.name}</strong>
+                  <br />
+                  <span style={{ color: "#555" }}>
+                    {[selectedPlace.primaryType, selectedPlace.phoneNumber]
+                      .filter(Boolean)
+                      .join(" · ") || "상세는 아래 링크에서"}
+                  </span>
+                  <br />
+                  {todayHours(selectedPlace) && (
+                    <>
+                      <TodayHoursLine place={selectedPlace} />
+                      <br />
+                    </>
+                  )}
+                  {selectedPlace.googleMapsUri ? (
+                    <a
+                      href={selectedPlace.googleMapsUri}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "#23399d", fontWeight: 600 }}
+                    >
+                      구글지도에서 보기 ↗
+                    </a>
+                  ) : (
+                    <span style={{ color: "#888" }}>상세 정보 없음 😢</span>
+                  )}
+                </div>
+              </InfoWindow>
+            )}
+            {/* 🎯 숙소 위치로 돌아오는 버튼 (구글맵 컨트롤 레이어 우상단에 얹는다) */}
+            <MapControl position={ControlPosition.RIGHT_TOP}>
+              <RecenterButton latitude={latitude} longitude={longitude} />
+            </MapControl>
+          </Map>
+        </APIProvider>
 
-      console.log('카카오맵 초기화 완료:', latitude, longitude);
-    });
+        {/* 로딩 및 에러 처리 */}
+        {isLoading && (
+          <div className={styles.overlay}>
+            <span className={styles.spinner} />
+          </div>
+        )}
+        {error && !isLoading && <div className={styles.overlay}>{error}</div>}
+      </div>
+    </div>
+  );
+}
+/// 🕐 오늘 요일 기준 영업시간 한 줄 추출 (weekdayDescriptions에서 "월요일: ..." 매칭)
+function todayHours(p: PlaceDto): string | null {
+  if (!p.weekdayDescriptions || p.weekdayDescriptions.length === 0) return null;
+  // getDay(): 0=일 ~ 6=토
+  const days = [
+    "일요일",
+    "월요일",
+    "화요일",
+    "수요일",
+    "목요일",
+    "금요일",
+    "토요일",
+  ];
+  const today = days[new Date().getDay()];
+  return p.weekdayDescriptions.find((d) => d.startsWith(today)) ?? null;
+}
+
+/// 🕐 오늘 영업시간 한 줄. 콤마(분리영업)는 줄바꿈하되, 둘째 줄부터 시간 시작 위치에 맞춰 정렬
+function TodayHoursLine({ place }: { place: PlaceDto }) {
+  const hours = todayHours(place);
+  if (!hours) return null;
+  const idx = hours.indexOf(":"); // "목요일: 시간들" → 라벨/본문 분리
+  const label = idx >= 0 ? hours.slice(0, idx + 1) : ""; // "목요일:"
+  const body = (idx >= 0 ? hours.slice(idx + 1) : hours).trim();
+  const ranges = body.split(",").map((r) => r.trim()); // 콤마 제거 + 시간대 분리
+
+  return (
+    <span style={{ color: "#1a7f37", display: "flex" }}>
+      <span style={{ whiteSpace: "nowrap" }}>🕐 {label}&nbsp;</span>
+      <span style={{ display: "flex", flexDirection: "column" }}>
+        {ranges.map((r, i) => (
+          <span key={i}>{r}</span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+/// 🎯 클릭하면 숙소 위치로 부드럽게 이동하는 버튼 컴포넌트
+function RecenterButton({
+  latitude,
+  longitude,
+}: {
+  latitude: number;
+  longitude: number;
+}) {
+  const map = useMap(); // 👈 현재 켜져있는 구글 맵 객체를 가져오는 치트키야!
+
+  const handleRecenter = () => {
+    if (!map) return;
+
+    // 지도의 중심을 숙소 좌표로 부드럽게(panTo) 이동시켜줘!
+    map.panTo({ lat: latitude, lng: longitude });
+    // 원한다면 줌 크기도 원래대로(15) 리셋 가능!
+    map.setZoom(15);
   };
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>위치 및 주변 시설</h2>
-      <p className={styles.address}>{address}</p>
-
-      <Script
-        src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&libraries=services&autoload=false`}
-        strategy="afterInteractive"
-        onLoad={initMap}
-      />
-
-      <div id="kakao-map" className={styles.map} />
-    </section>
+    <button
+      type="button"
+      onClick={handleRecenter}
+      style={{
+        margin: "10px",
+        padding: "10px 14px",
+        backgroundColor: "#ffffff",
+        border: "none",
+        borderRadius: "8px",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+        cursor: "pointer",
+        fontSize: "14px",
+        fontWeight: "bold",
+        color: "#333",
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+      }}
+    >
+      🏠 숙소 위치로
+    </button>
   );
 }

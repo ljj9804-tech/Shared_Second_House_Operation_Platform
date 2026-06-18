@@ -1,24 +1,45 @@
-/* 🎨 플랫폼 시그니처 테마 컬러 (Flutter 화면과 동일) */
-.screen {
-  --primary-navy: #23399d;
-  --accent-mint: #00e5a3;
-
+/* 🎨 색/모양은 globals.css 의 전역 토큰을 따른다 */
+.chat {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 64px); /* 상단 Navbar 높이만큼 제외 */
-  background-color: #f4f6fa;
+  height: 100%; /* 부모(페이지 or 플로팅 패널)가 높이를 정한다 */
+  min-height: 0;
+  background-color: var(--color-card-bg);
 }
 
 /* 상단 헤더 */
 .appBar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background-color: var(--primary-navy);
+  background-color: var(--color-primary);
   color: #fff;
   font-weight: 700;
   font-size: 18px;
+}
+
+/* ✕ 닫기 버튼 (플로팅 패널에서만 표시) */
+.closeBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* 💬 메시지 리스트 */
@@ -51,7 +72,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: var(--primary-navy);
+  background-color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,19 +95,19 @@
   padding: 10px 14px;
   font-size: 14px;
   line-height: 1.4;
-  color: #1a1a1a;
+  color: var(--color-foreground);
   white-space: pre-wrap;
   word-break: break-word;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .bubbleMe {
-  background-color: #d6e4ff;
+  background-color: var(--color-primary-light);
   border-radius: 12px 12px 2px 12px;
 }
 
 .bubbleBot {
-  background-color: #fff;
+  background-color: var(--color-background);
   border-radius: 12px 12px 12px 2px;
 }
 
@@ -110,10 +131,10 @@
 
 .chip {
   padding: 5px 10px;
-  background-color: rgba(35, 57, 157, 0.06);
+  background-color: var(--color-primary-light);
   border-radius: 8px;
   font-size: 11px;
-  color: var(--primary-navy);
+  color: var(--color-primary);
 }
 
 /* ⏳ 답변 작성 중 로딩 스피너 */
@@ -121,8 +142,8 @@
   display: inline-block;
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(35, 57, 157, 0.25);
-  border-top-color: var(--primary-navy);
+  border: 2px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -139,7 +160,7 @@
   align-items: center;
   gap: 4px;
   padding: 6px 8px;
-  background-color: #fff;
+  background-color: var(--color-background);
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -163,12 +184,12 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--primary-navy);
+  color: var(--color-primary);
   font-size: 18px;
   transition: opacity 0.2s;
 }
 
 .sendBtn:disabled {
-  color: #bbb;
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
