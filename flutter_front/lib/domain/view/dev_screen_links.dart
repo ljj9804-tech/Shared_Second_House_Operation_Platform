@@ -1,9 +1,7 @@
+// TODO: [개발 완료 시 이 파일 전체 삭제]
 import 'package:flutter/material.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
-import 'package:flutter_front/domain/view/main_screen.dart';
-import 'package:flutter_front/domain/view/stay_home_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
-import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_subscription_apply_screen.dart';
@@ -13,65 +11,31 @@ import 'package:flutter_front/domain/view/guest_chat_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_bot_screen.dart';
 import 'package:flutter_front/domain/view/guest_restaurant_map_screen.dart';
 
-/// 팀 통합 로컬 테스트 화면
-/// - 각 멤버가 본인 파트 화면을 확인할 수 있습니다
-/// - main.dart에서 이 화면으로 진입 설정
-class TeamTestScreen extends StatelessWidget {
-  const TeamTestScreen({super.key});
+/// TODO: [개발 완료 시 삭제] 팀원 화면 링크 모음 (개발 중 임시 사용)
+class DevScreenLinks extends StatelessWidget {
+  const DevScreenLinks({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          '팀 테스트 화면',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AppColors.primary,
-        centerTitle: true,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── 통합 메인 ──────────────────────────────────────
-          const _SectionLabel('통합 메인'),
-          _TestTile(
-            icon: Icons.home,
-            title: '통합 메인 화면',
-            subtitle: '홈 · 내 예약 · AI 챗봇 (바텀 네비 포함)',
-            onTap: () => _go(context, const MainScreen()),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ── 혜은 파트 ──────────────────────────────────────
-          const _SectionLabel('혜은hyen — Stay (숙소 / 예약)'),
-          // _TestTile(
-          //   icon: Icons.home_outlined,
-          //   title: '홈 화면',
-          //   subtitle: '숙소 배너 · 가로 스크롤 카드 목록',
-          //   onTap: () => _go(context, const StayHomeScreen()),
-          // ),
-          _TestTile(
+          const _SectionLabel('혜은 — Stay (숙소 / 예약)'),
+          _DevTile(
             icon: Icons.list_alt,
             title: '숙소 목록',
             subtitle: '전체 숙소 카드 목록',
             onTap: () => _go(context, const StayAccommodationListScreen()),
           ),
-          // _TestTile(
-          //   icon: Icons.info_outline,
-          //   title: '숙소 상세',
-          //   subtitle: 'ID 1번 숙소 상세 페이지',
-          //   onTap: () => _go(context, const StayAccommodationDetailScreen(accommodationId: 1)),
-          // ),
-          _TestTile(
+          _DevTile(
             icon: Icons.calendar_month_outlined,
             title: '내 예약 목록',
             subtitle: '예약 카드 · 취소 기능',
             onTap: () => _go(context, const StayMyReservationScreen()),
           ),
-          _TestTile(
+          _DevTile(
             icon: Icons.date_range_outlined,
             title: '예약 캘린더',
             subtitle: '날짜 선택 예약 화면',
@@ -83,7 +47,7 @@ class TeamTestScreen extends StatelessWidget {
               ),
             ),
           ),
-          _TestTile(
+          _DevTile(
             icon: Icons.subscriptions_outlined,
             title: '구독 신청',
             subtitle: '팀원 추가 · 계약 개월수 · 신청',
@@ -109,15 +73,14 @@ class TeamTestScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── 진주 파트 ────────────────────────────
-          const _SectionLabel('진주 - 게스트 채팅방'),
-          _TestTile(
+          const _SectionLabel('진주 — 게스트 채팅방'),
+          _DevTile(
             icon: Icons.chat_outlined,
             title: '채팅 메인',
             subtitle: '채팅방 목록 · AI챗봇 · 맛집 진입 허브',
             onTap: () => _go(context, const GuestChatMainScreen()),
           ),
-          _TestTile(
+          _DevTile(
             icon: Icons.chat_bubble_outline,
             title: '게스트 채팅방',
             subtitle: 'WebSocket · 채팅방 ID: 1번',
@@ -131,15 +94,16 @@ class TeamTestScreen extends StatelessWidget {
             ),
           ),
 
-          // ── 태흔 파트 ────────────────────────────
-          const _SectionLabel('태흔 - AI / 맛집 파트'),
-          _TestTile(
+          const SizedBox(height: 16),
+
+          const _SectionLabel('태흔 — AI / 맛집'),
+          _DevTile(
             icon: Icons.smart_toy_outlined,
             title: 'AI 챗봇',
             subtitle: 'Gemini RAG 기반 QnA 챗봇',
             onTap: () => _go(context, const GuestChatBotScreen()),
           ),
-          _TestTile(
+          _DevTile(
             icon: Icons.restaurant_menu_outlined,
             title: '맛집 지도',
             subtitle: '주변 맛집 지도 화면',
@@ -147,19 +111,6 @@ class TeamTestScreen extends StatelessWidget {
           ),
 
           const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.primaryBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.primaryBorder),
-            ),
-            child: const Text(
-              '※ 이 화면은 로컬 테스트 전용입니다.\n'
-              '   팀 병합 시 main.dart → AppRouter로 변경하세요.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.6),
-            ),
-          ),
         ],
       ),
     );
@@ -191,13 +142,13 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _TestTile extends StatelessWidget {
+class _DevTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
-  const _TestTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  const _DevTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
