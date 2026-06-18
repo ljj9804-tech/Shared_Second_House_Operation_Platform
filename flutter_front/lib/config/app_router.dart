@@ -5,6 +5,7 @@ import 'package:flutter_front/domain/controller/stay_accommodation_controller.da
 import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
 import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
 import 'package:flutter_front/domain/controller/restaurant_controller.dart';
+import 'package:flutter_front/common/widget/global_chatbot_fab.dart';
 
 // [화면 Import]
 import 'package:flutter_front/domain/view/main_screen.dart';
@@ -36,7 +37,10 @@ class AppRouter extends StatelessWidget {
           useMaterial3: true,
           scaffoldBackgroundColor: AppColors.background,
         ),
+        navigatorKey: GlobalChatbotFab.navigatorKey,
         navigatorObservers: [routeObserver],
+        // Navigator 위에 전역 플로팅 챗봇 버튼을 얹어 모든 화면을 따라다니게 한다.
+        builder: (context, child) => GlobalChatbotFab.wrap(child),
         initialRoute: '/',
         routes: {
           // [홈]
