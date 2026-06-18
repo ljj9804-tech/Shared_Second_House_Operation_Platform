@@ -32,6 +32,18 @@ public enum ErrorCode {
     ALREADY_REFUNDED(HttpStatus.BAD_REQUEST, "P002", "이미 환불된 내역입니다."),
     REFUND_AMOUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "P003", "환불 금액이 결제 금액을 초과합니다."),
 
+    // Stay - Accommodation
+    STAY_ACCOMMODATION_NOT_FOUND(HttpStatus.NOT_FOUND, "SA001", "숙소를 찾을 수 없습니다."),
+
+    // Stay - Reservation
+    STAY_RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "SR001", "예약을 찾을 수 없습니다."),
+    STAY_RESERVATION_DUPLICATE(HttpStatus.CONFLICT, "SR002", "선택한 날짜에 이미 예약이 존재합니다."),
+    STAY_RESERVATION_UNAUTHORIZED(HttpStatus.FORBIDDEN, "SR003", "본인의 예약만 취소할 수 있습니다."),
+    STAY_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "SR004", "유저를 찾을 수 없습니다."),
+
+    // Stay - Story
+    STAY_STORY_NOT_FOUND(HttpStatus.NOT_FOUND, "SS001", "스토리를 찾을 수 없습니다."),
+
     // Common
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "C001", "잘못된 입력값입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 오류가 발생했습니다.");

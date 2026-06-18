@@ -121,7 +121,7 @@ class _StayMyReservationScreenState extends State<StayMyReservationScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('예약 취소'),
+        title: const Text('예약 취소', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: const Text('예약을 취소하시겠습니까?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('아니요')),
@@ -134,7 +134,7 @@ class _StayMyReservationScreenState extends State<StayMyReservationScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(success ? '예약이 취소되었습니다.' : ctrl.errorMessage ?? '취소에 실패했습니다.'),
-          backgroundColor: success ? AppColors.textPrimary : AppColors.danger,
+          backgroundColor: success ? AppColors.success : AppColors.danger,
         ));
       }
     }

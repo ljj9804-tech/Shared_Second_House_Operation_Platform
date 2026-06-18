@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_front/config/app_config.dart';
 import 'package:flutter_front/domain/dto/stay_reservation_dto.dart';
@@ -49,7 +50,8 @@ class StayReservationController extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      errorMessage = '예약에 실패했습니다.';
+      final data = (e is DioException) ? e.response?.data : null;
+      errorMessage = (data is Map && data['message'] != null) ? data['message'] : '예약에 실패했습니다.';
       debugPrint('❌ [예약 생성] $e');
       isLoading = false;
       notifyListeners();
@@ -75,7 +77,8 @@ class StayReservationController extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      errorMessage = '예약 취소에 실패했습니다.';
+      final data = (e is DioException) ? e.response?.data : null;
+      errorMessage = (data is Map && data['message'] != null) ? data['message'] : '예약 취소에 실패했습니다.';
       debugPrint('❌ [예약 취소] $e');
       notifyListeners();
       return false;

@@ -21,9 +21,15 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   // TODO [인증]: JWT 연동 후 실제 userId로 교체
   final int _leaderId = AppConfig.tempUserId;
 
-  final List<TextEditingController> _memberControllers = [TextEditingController()];
+  final List<TextEditingController> _memberControllers = [];
   int _durationMonths = 1;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _addMember();
+  }
 
   @override
   void dispose() {
@@ -34,7 +40,9 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   }
 
   void _addMember() {
-    setState(() => _memberControllers.add(TextEditingController()));
+    final ctrl = TextEditingController();
+    ctrl.addListener(() => setState(() {}));
+    setState(() => _memberControllers.add(ctrl));
   }
 
   void _removeMember(int index) {
@@ -50,6 +58,16 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
         .where((id) => id.isNotEmpty)
         .toList();
 
+    if (memberIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('팀원 ID를 최소 1명 이상 입력해주세요.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -60,38 +78,26 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
         memberIdentifiers: memberIds,
       );
       if (mounted) {
-        _showDialog(success: true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('구독 신청이 완료됐어요! 관리자 승인을 기다려주세요.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        _showDialog(success: false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('구독 신청에 실패했어요. 다시 시도해주세요.'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _showDialog({required bool success}) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(success ? '신청 완료' : '신청 실패'),
-        content: Text(
-          success
-              ? '구독 신청이 완료됐어요!\n관리자 승인을 기다려주세요.'
-              : '구독 신청에 실패했어요.\n다시 시도해주세요.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              if (success) Navigator.pop(context);
-            },
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -272,7 +278,8 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   }
 
   Widget _buildPriceSummary(StayAccommodationDto item) {
-    final teamCount = _memberControllers.length + 1; // 팀원 + 대표자
+    final filledCount = _memberControllers.where((c) => c.text.trim().isNotEmpty).length;
+    final teamCount = filledCount + 1; // 입력된 팀원 + 대표자
     final monthlyPerTeam = (item.monthlyPrice / teamCount).floor();
 
     return Container(

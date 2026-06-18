@@ -172,12 +172,12 @@ class _StayReservationCalendarScreenState extends State<StayReservationCalendarS
     if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('예약이 완료되었습니다!'), backgroundColor: Color(0xFF00A878)),
+        const SnackBar(content: Text('예약이 완료되었습니다!'), backgroundColor: AppColors.success),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ctrl.errorMessage ?? '예약에 실패했습니다.'), backgroundColor: Colors.red),
+        SnackBar(content: Text(ctrl.errorMessage ?? '예약에 실패했습니다.'), backgroundColor: AppColors.danger),
       );
     }
   }

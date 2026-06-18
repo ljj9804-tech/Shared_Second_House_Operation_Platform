@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
 import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
+import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
+import 'package:flutter_front/domain/controller/restaurant_controller.dart';
 
 // [화면 Import]
-import 'package:flutter_front/domain/view/stay_home_screen.dart';
+import 'package:flutter_front/domain/view/main_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
@@ -23,6 +25,8 @@ class AppRouter extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => StayAccommodationController()),
         ChangeNotifierProvider(create: (_) => StayReservationController()),
+        ChangeNotifierProvider(create: (_) => ChatBotController()),
+        ChangeNotifierProvider(create: (_) => RestaurantController()),
       ],
       child: MaterialApp(
         title: '세컨하우스',
@@ -36,7 +40,7 @@ class AppRouter extends StatelessWidget {
         initialRoute: '/',
         routes: {
           // [홈]
-          '/': (context) => const StayHomeScreen(),
+          '/': (context) => const MainScreen(),
 
           // [숙소]
           '/accommodations': (context) => const StayAccommodationListScreen(),
