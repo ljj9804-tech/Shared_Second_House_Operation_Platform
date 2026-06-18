@@ -89,6 +89,10 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
+                                // 게스트 채팅 테스트
+                                "/ws-test.html",
+                                "/ws-guest-chat/**",
+                                "/api/guest/chat/**",
 
                                 "/oauth2/**",
                                 "/login/**",

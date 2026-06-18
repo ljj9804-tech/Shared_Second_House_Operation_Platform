@@ -3,7 +3,7 @@ import 'package:flutter_front/domain/dto/delivery_order_dto.dart';
 
 class DeliveryService {
   // 안드로이드 에뮬레이터 전용 백엔드 주소 (포트 8082)
-  final String _baseUrl = "http://10.0.2.2:8082/api/delivery";
+  final String _baseUrl = "http://10.0.2.2:8080/api/delivery/admin/orders";
   final Dio _dio = Dio();
 
   /// 배달 상태 변경 API 호출 함수
