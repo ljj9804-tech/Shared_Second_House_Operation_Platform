@@ -42,13 +42,11 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       if (!mounted) return;
       final accommodation =
           context.read<StayAccommodationController>().selectedAccommodation;
-      if (accommodation != null &&
-          accommodation.latitude != null &&
-          accommodation.longitude != null) {
-        context.read<RestaurantController>().loadRestaurants(
-          lat: accommodation.latitude!,
-          lng: accommodation.longitude!,
-        );
+      if (accommodation != null) {
+        // 내 DB(sh_restaurant)에서 이 숙소 부근 맛집을 읽어온다 (구글 동기화는 서버 스케줄러 담당)
+        context
+            .read<RestaurantController>()
+            .loadRestaurants(accommodationId: widget.accommodationId);
       }
     });
 
@@ -369,9 +367,18 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
             children: [
               const Icon(Icons.location_on_outlined, size: 16, color: Colors.black45),
               const SizedBox(width: 4),
+              // 주소가 길어 공간이 모자라면 흐르는(마퀴) 효과
               Expanded(
-                child: Text(item.address, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                child: _MarqueeText(
+                  item.address,
+                  style: const TextStyle(fontSize: 13, color: Colors.black54),
+                ),
               ),
+              // 🏠 숙소 위치로 버튼 (주소 오른쪽, 좌표 있을 때만)
+              if (houseLatLng != null) ...[
+                const SizedBox(width: 8),
+                _recenterButton(houseLatLng),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -427,6 +434,32 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  /// 지도 중심을 숙소 좌표로 되돌리는 흰색 버튼
+  Widget _recenterButton(LatLng target) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      elevation: 3,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(target, 15),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Text(
+            '🏠 숙소 위치로',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF333333),
+              fontSize: 12,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -571,10 +604,17 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
     };
 
     for (final p in places) {
+      final rank = p.popularityRank;
+      final hue = (rank == null || rank < 10)
+        ? BitmapDescriptor.hueRed   // 상위
+        : BitmapDescriptor.hueOrange;  // 나머지
       markers.add(
-        Marker(
+         Marker(
           markerId: MarkerId(p.id),
           position: LatLng(p.latitude, p.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            hue
+          ),
           infoWindow: InfoWindow(
             title: p.name,
             snippet: _buildSnippet(p),
@@ -616,12 +656,83 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
     }
   }
 
-  /// 마커 말풍선에 띄울 평점/주소 요약
+  /// 마커 말풍선 요약 (한 줄로 짧게 — 길면 기본 InfoWindow가 말줄임 처리됨)
   String _buildSnippet(PlaceDto p) {
-    final rating = p.rating != null
-        ? '⭐ ${p.rating} (${p.userRatingCount ?? 0})'
-        : '평점 없음';
-    return '$rating · ${p.address}';
+    final parts = <String>[
+      if (p.primaryType != null && p.primaryType!.isNotEmpty) p.primaryType!,
+      if (_todayHours(p) != null) '🕐 ${_todayHours(p)}',
+    ];
+    return parts.isEmpty ? '탭하면 상세보기' : parts.join(' · ');
   }
 
+  /// 오늘 요일 영업시간만 추출 (weekdayDescriptions의 "월요일: 오전 11:00~..." → "오전 11:00~...")
+  String? _todayHours(PlaceDto p) {
+    if (p.weekdayDescriptions.isEmpty) return null;
+    const days = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'];
+    final today = days[DateTime.now().weekday - 1]; // weekday: 1=월 ~ 7=일
+    for (final d in p.weekdayDescriptions) {
+      if (d.startsWith(today)) {
+        final idx = d.indexOf(': '); // "월요일: " 접두어 제거
+        return idx >= 0 ? d.substring(idx + 2) : d;
+      }
+    }
+    return null;
+  }
+
+}
+
+/// 텍스트가 가로 공간을 넘치면 좌우로 흐르게(마퀴) 보여주는 위젯. 넘치지 않으면 그냥 표시.
+class _MarqueeText extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+  const _MarqueeText(this.text, {this.style});
+
+  @override
+  State<_MarqueeText> createState() => _MarqueeTextState();
+}
+
+class _MarqueeTextState extends State<_MarqueeText> {
+  final ScrollController _controller = ScrollController();
+  bool _looping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startIfOverflow());
+  }
+
+  Future<void> _startIfOverflow() async {
+    if (_looping || !_controller.hasClients) return;
+    if (_controller.position.maxScrollExtent <= 0) return; // 안 넘치면 스크롤 안 함
+    _looping = true;
+    while (mounted && _controller.hasClients) {
+      final max = _controller.position.maxScrollExtent;
+      if (max <= 0) break;
+      final ms = (max * 25).toInt() + 1; // 거리에 비례한 속도
+      await _controller.animateTo(max,
+          duration: Duration(milliseconds: ms), curve: Curves.linear);
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted || !_controller.hasClients) break;
+      await _controller.animateTo(0,
+          duration: Duration(milliseconds: ms), curve: Curves.linear);
+      await Future.delayed(const Duration(milliseconds: 700));
+    }
+    _looping = false;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _controller,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Text(widget.text, maxLines: 1, style: widget.style),
+    );
+  }
 }

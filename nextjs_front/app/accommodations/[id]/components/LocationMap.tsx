@@ -16,20 +16,27 @@ import {
 interface PlaceDto {
   id: string;
   name: string;
-  address: string;
+  primaryType?: string | null;
+  phoneNumber?: string | null;
   latitude: number;
   longitude: number;
-  rating?: number | null;
-  userRatingCount?: number | null;
   googleMapsUri?: string;
+  weekdayDescriptions?: string[];
+  accommodationId?: number | null;
+  popularityRank?: number | null; // 인기도 순위 (0이 가장 인기, 없으면 null)
 }
 
 interface LocationMapProps {
+  accommodationId: number;
   latitude: number;
   longitude: number;
 }
 
-export default function LocationMap({ latitude, longitude }: LocationMapProps) {
+export default function LocationMap({
+  accommodationId,
+  latitude,
+  longitude,
+}: LocationMapProps) {
   const [places, setPlaces] = useState<PlaceDto[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,8 +45,9 @@ export default function LocationMap({ latitude, longitude }: LocationMapProps) {
   useEffect(() => {
     async function fetchRestaurants() {
       try {
+        // 내 DB에 저장된 숙소별 맛집 조회 (구글 호출은 백엔드 /sync에서 별도 수행)
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/places/restaurants?lat=${latitude}&lng=${longitude}&radius=1000&limit=10`,
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/places/restaurants?accommodationId=${accommodationId}`,
         );
         if (!res.ok) throw new Error();
         const data = await res.json();
@@ -51,7 +59,7 @@ export default function LocationMap({ latitude, longitude }: LocationMapProps) {
       }
     }
     fetchRestaurants();
-  }, [latitude, longitude]);
+  }, [accommodationId]);
 
   return (
     <div className={styles.screen}>
@@ -83,15 +91,25 @@ export default function LocationMap({ latitude, longitude }: LocationMapProps) {
               />
             </AdvancedMarker>
 
-            {/* 🍽️ 맛집 마커들 반복문 돌리기 */}
-            {places.map((p) => (
-              <AdvancedMarker
-                key={p.id}
-                position={{ lat: p.latitude, lng: p.longitude }}
-                title={p.name}
-                onClick={() => setSelectedPlace(p)} // 클릭하면 이 맛집을 선택!
-              />
-            ))}
+            {/* 🍽️ 맛집 마커들 — 순위로 색 구분 (상위 빨강 / 10등~ 주황) */}
+            {places.map((p) => {
+              const rank = p.popularityRank;
+              const isTop = rank == null || rank < 10; // 상위(또는 순위 없음)
+              return (
+                <AdvancedMarker
+                  key={p.id}
+                  position={{ lat: p.latitude, lng: p.longitude }}
+                  title={p.name}
+                  onClick={() => setSelectedPlace(p)} // 클릭하면 이 맛집을 선택!
+                >
+                  <Pin
+                    background={isTop ? "#EA4335" : "#FB8C00"}
+                    borderColor={isTop ? "#C5221F" : "#E07B00"}
+                    glyphColor="#ffffff"
+                  />
+                </AdvancedMarker>
+              );
+            })}
 
             {/* 💬 마커 클릭 시 나타날 말풍선 (InfoWindow) */}
             {selectedPlace && (
@@ -113,11 +131,17 @@ export default function LocationMap({ latitude, longitude }: LocationMapProps) {
                   <strong>{selectedPlace.name}</strong>
                   <br />
                   <span style={{ color: "#555" }}>
-                    ⭐ {selectedPlace.rating ?? "0"} (
-                    {selectedPlace.userRatingCount ?? 0}) ·{" "}
-                    {selectedPlace.address}
+                    {[selectedPlace.primaryType, selectedPlace.phoneNumber]
+                      .filter(Boolean)
+                      .join(" · ") || "상세는 아래 링크에서"}
                   </span>
                   <br />
+                  {todayHours(selectedPlace) && (
+                    <>
+                      <TodayHoursLine place={selectedPlace} />
+                      <br />
+                    </>
+                  )}
                   {selectedPlace.googleMapsUri ? (
                     <a
                       href={selectedPlace.googleMapsUri}
@@ -151,8 +175,52 @@ export default function LocationMap({ latitude, longitude }: LocationMapProps) {
     </div>
   );
 }
+/// 🕐 오늘 요일 기준 영업시간 한 줄 추출 (weekdayDescriptions에서 "월요일: ..." 매칭)
+function todayHours(p: PlaceDto): string | null {
+  if (!p.weekdayDescriptions || p.weekdayDescriptions.length === 0) return null;
+  // getDay(): 0=일 ~ 6=토
+  const days = [
+    "일요일",
+    "월요일",
+    "화요일",
+    "수요일",
+    "목요일",
+    "금요일",
+    "토요일",
+  ];
+  const today = days[new Date().getDay()];
+  return p.weekdayDescriptions.find((d) => d.startsWith(today)) ?? null;
+}
+
+/// 🕐 오늘 영업시간 한 줄. 콤마(분리영업)는 줄바꿈하되, 둘째 줄부터 시간 시작 위치에 맞춰 정렬
+function TodayHoursLine({ place }: { place: PlaceDto }) {
+  const hours = todayHours(place);
+  if (!hours) return null;
+  const idx = hours.indexOf(":"); // "목요일: 시간들" → 라벨/본문 분리
+  const label = idx >= 0 ? hours.slice(0, idx + 1) : ""; // "목요일:"
+  const body = (idx >= 0 ? hours.slice(idx + 1) : hours).trim();
+  const ranges = body.split(",").map((r) => r.trim()); // 콤마 제거 + 시간대 분리
+
+  return (
+    <span style={{ color: "#1a7f37", display: "flex" }}>
+      <span style={{ whiteSpace: "nowrap" }}>🕐 {label}&nbsp;</span>
+      <span style={{ display: "flex", flexDirection: "column" }}>
+        {ranges.map((r, i) => (
+          <span key={i}>{r}</span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
 /// 🎯 클릭하면 숙소 위치로 부드럽게 이동하는 버튼 컴포넌트
-function RecenterButton({ latitude, longitude }: LocationMapProps) {
+function RecenterButton({
+  latitude,
+  longitude,
+}: {
+  latitude: number;
+  longitude: number;
+}) {
   const map = useMap(); // 👈 현재 켜져있는 구글 맵 객체를 가져오는 치트키야!
 
   const handleRecenter = () => {
