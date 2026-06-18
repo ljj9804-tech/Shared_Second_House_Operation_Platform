@@ -80,6 +80,7 @@ class DevScreenLinks extends StatelessWidget {
           //   subtitle: '채팅방 목록 · AI챗봇 · 맛집 진입 허브',
           //   onTap: () => _go(context, const GuestChatMainScreen()),
           // ),
+
           _DevTile(
             icon: Icons.chat_bubble_outline,
             title: '게스트 채팅방',
