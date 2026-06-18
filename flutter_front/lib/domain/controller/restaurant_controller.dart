@@ -10,20 +10,23 @@ class RestaurantController extends ChangeNotifier {
 
   List<PlaceDto> _places = [];
   bool _isLoading = false;
-  bool _loaded = false; // 한 번이라도 성공적으로 받아왔는지 (캐시 여부)
+  double? _loadedLat; // 마지막으로 받아온 좌표 (캐시 키)
+  double? _loadedLng;
   String? _error;
 
   List<PlaceDto> get places => _places;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// 맛집 목록 로드. 이미 받아온 적 있으면(캐시) 재호출하지 않는다.
+  /// 맛집 목록 로드. 같은 좌표를 이미 받아왔으면(캐시) 재호출하지 않는다.
+  /// 숙소(좌표)가 바뀌면 새로 불러온다.
   Future<void> loadRestaurants({
     required double lat,
     required double lng,
     bool forceRefresh = false,
   }) async {
-    if (_loaded && !forceRefresh) return; // 캐시 재사용 → API 비용 절약
+    // 같은 좌표 재진입 시에만 캐시 재사용 → API 비용 절약
+    if (!forceRefresh && _loadedLat == lat && _loadedLng == lng) return;
 
     _isLoading = true;
     _error = null;
@@ -31,7 +34,8 @@ class RestaurantController extends ChangeNotifier {
 
     try {
       _places = await _placesService.nearbyRestaurants(lat: lat, lng: lng);
-      _loaded = true;
+      _loadedLat = lat;
+      _loadedLng = lng;
     } catch (e) {
       _error = '맛집 정보를 가져오지 못했어요. 😢';
       debugPrint('🔴 [맛집 컨트롤러] 로드 실패: $e');

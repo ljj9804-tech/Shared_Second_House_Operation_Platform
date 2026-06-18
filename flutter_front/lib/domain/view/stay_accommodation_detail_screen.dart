@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_front/domain/controller/restaurant_controller.dart';
+import 'package:flutter_front/domain/dto/place_dto.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/widget/bottom_sheet_selector.dart';
@@ -9,6 +12,7 @@ import 'package:flutter_front/domain/dto/stay_story_dto.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_subscription_apply_screen.dart';
 import 'package:flutter_front/util/price_calculator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StayAccommodationDetailScreen extends StatefulWidget {
   final int accommodationId;
@@ -24,29 +28,48 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
   int _months = 1;
   int _teams = 1;
   final ScrollController _scrollController = ScrollController();
+  GoogleMapController? _mapController;
   bool _showTitle = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StayAccommodationController>().loadAccommodationDetail(widget.accommodationId);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await context
+          .read<StayAccommodationController>()
+          .loadAccommodationDetail(widget.accommodationId);
+      if (!mounted) return;
+      final accommodation =
+          context.read<StayAccommodationController>().selectedAccommodation;
+      if (accommodation != null &&
+          accommodation.latitude != null &&
+          accommodation.longitude != null) {
+        context.read<RestaurantController>().loadRestaurants(
+          lat: accommodation.latitude!,
+          lng: accommodation.longitude!,
+        );
+      }
     });
+
     _scrollController.addListener(() {
       final shouldShow = _scrollController.offset > 220;
       if (shouldShow != _showTitle) setState(() => _showTitle = shouldShow);
     });
   }
 
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<StayAccommodationController>();
+    final controller = context.watch<RestaurantController>();
 
     if (ctrl.isLoadingDetail) {
       return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
@@ -75,7 +98,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
                 const Divider(height: 1),
                 _buildAmenities(item),
                 const Divider(height: 1),
-                _buildMapPlaceholder(item),
+                _buildMapPlaceholder(item, controller),
                 const Divider(height: 1),
                 _buildStories(ctrl.stories),
                 const SizedBox(height: 100),
@@ -330,7 +353,11 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
     );
   }
 
-  Widget _buildMapPlaceholder(StayAccommodationDto item) {
+  Widget _buildMapPlaceholder(StayAccommodationDto item, RestaurantController controller) {
+    final houseLatLng = (item.latitude != null && item.longitude != null)
+        ? LatLng(item.latitude!, item.longitude!)
+        : null;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -348,24 +375,57 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.map_outlined, size: 48, color: Colors.grey),
-                  SizedBox(height: 8),
-                  Text('지도 준비 중', style: TextStyle(color: Colors.grey)),
-                ],
+          if (houseLatLng == null)
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('지도 정보가 없습니다.', style: TextStyle(color: Colors.black54)),
+              ),
+            )
+          else
+            SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: houseLatLng,
+                        zoom: 15,
+                      ),
+                      markers: _buildMarkers(controller.places, houseLatLng),
+                      myLocationButtonEnabled: false,
+                      mapToolbarEnabled: false,
+                      onMapCreated: (c) => _mapController = c,
+                    ),
+                    if (controller.isLoading)
+                      Container(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: AppColors.primary),
+                        ),
+                      ),
+                    if (controller.error != null && !controller.isLoading)
+                      Container(
+                        color: Colors.grey.shade100,
+                        child: Center(
+                          child: Text(
+                            controller.error!,
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -497,4 +557,71 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       (m) => '${m[1]},',
     );
   }
+
+  /// 🍽️ 숙소 + 맛집 마커 묶음 생성
+  Set<Marker> _buildMarkers(List<PlaceDto> places, LatLng houseLatLng) {
+    final markers = <Marker>{
+      // 숙소 마커
+      Marker(
+        markerId: const MarkerId('house'),
+        position: houseLatLng,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        infoWindow: const InfoWindow(title: '🏠 숙소', snippet: '세컨하우스'),
+      ),
+    };
+
+    for (final p in places) {
+      markers.add(
+        Marker(
+          markerId: MarkerId(p.id),
+          position: LatLng(p.latitude, p.longitude),
+          infoWindow: InfoWindow(
+            title: p.name,
+            snippet: _buildSnippet(p),
+            onTap: () => _openPlace(p), // 말풍선 탭 → 크롬 커스텀탭으로 상세
+          ),
+        ),
+      );
+    }
+    return markers;
+  }
+
+  /// 🍽️ 말풍선 탭 시 상세 열기 (크롬 커스텀탭)
+  /// Places API가 내려준 정식 장소 URL(googleMapsUri, place_id 포함)을 그대로 연다.
+  /// 직접 좌표로 URL을 만들면 동명의 엉뚱한 가게가 잡히거나 지도만 떠서 사용하지 않는다.
+  Future<void> _openPlace(PlaceDto p) async {
+    final url = p.googleMapsUri;
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('상세 정보 주소가 없어요. 😢')),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(url);
+
+    // 크롬 커스텀탭으로 열기 (앱 위 오버레이, 시스템 뒤로가기로 지도 복귀)
+    // 구글맵 앱으로 가로채여 열리는 걸 막기 위해 다른 외부 앱으로는 폴백하지 않는다.
+    bool launched = false;
+    try {
+      launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    } catch (_) {
+      launched = false;
+    }
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('크롬 브라우저가 필요해요. 크롬을 설치해 주세요. 🌐')),
+      );
+    }
+  }
+
+  /// 마커 말풍선에 띄울 평점/주소 요약
+  String _buildSnippet(PlaceDto p) {
+    final rating = p.rating != null
+        ? '⭐ ${p.rating} (${p.userRatingCount ?? 0})'
+        : '평점 없음';
+    return '$rating · ${p.address}';
+  }
+
 }
