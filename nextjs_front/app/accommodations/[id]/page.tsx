@@ -147,6 +147,7 @@ export default function AccommodationDetailPage() {
 
           {/* 섹션2: 위치 및 주변 시설 */}
           <LocationMap
+            accommodationId={accommodation.id}
             latitude={accommodation.latitude}
             longitude={accommodation.longitude}
           />
