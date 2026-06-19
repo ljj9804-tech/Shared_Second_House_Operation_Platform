@@ -24,7 +24,7 @@ public class TourService {
     private final StayAccommodationRepository stayAccommodationRepository;
 
     // 외부 API와 HTTP 통신을 수행하기 위한 스프링 내장 객체 초기화
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${tour.api.service-key}")
     private String serviceKey;
