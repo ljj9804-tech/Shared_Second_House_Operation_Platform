@@ -3,6 +3,8 @@ package com.busanit401.spring_back.config;
 import com.busanit401.spring_back.security.auth.JwtAuthenticationFilter;
 import com.busanit401.spring_back.security.auth.JwtFilter;
 import com.busanit401.spring_back.domain.service.TokenBlacklistService;
+import com.busanit401.spring_back.security.oauth.CustomOAuth2AuthenticationSuccessHandler;
+import com.busanit401.spring_back.security.oauth.CustomOAuth2UserService;
 import com.busanit401.spring_back.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +42,8 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtUtil jwtUtil;
-
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOAuth2AuthenticationSuccessHandler customOAuth2AuthenticationSuccessHandler;
     @Bean
     public BCryptPasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
@@ -117,8 +120,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
-                        .defaultSuccessUrl("/", true)
-                );;
+                                .userInfoEndpoint(userInfo -> userInfo
+                                        .userService(customOAuth2UserService)
+                                )
+                                .successHandler(customOAuth2AuthenticationSuccessHandler)
+                        // defaultSuccessUrl 제거 — successHandler가 리다이렉트 담당
+                );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
