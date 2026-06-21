@@ -1,0 +1,98 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.loading {
+  text-align: center;
+  padding: 80px;
+  color: var(--color-text-muted);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.calendarWrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+/* react-datepicker 커스텀 스타일 */
+.calendarWrap :global(.react-datepicker) {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+}
+
+.calendarWrap :global(.react-datepicker__header) {
+  background-color: var(--color-primary);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.calendarWrap :global(.react-datepicker__current-month) {
+  color: white;
+  font-size: var(--font-size-base);
+}
+
+.calendarWrap :global(.react-datepicker__day-name) {
+  color: white;
+}
+
+.calendarWrap :global(.react-datepicker__day--selected),
+.calendarWrap :global(.react-datepicker__day--in-range),
+.calendarWrap :global(.react-datepicker__day--range-start),
+.calendarWrap :global(.react-datepicker__day--range-end) {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.calendarWrap :global(.react-datepicker__day--in-selecting-range) {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.calendarWrap :global(.react-datepicker__day--disabled) {
+  color: var(--color-border);
+  text-decoration: line-through;
+}
+
+.selectedDates {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.dateItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.dateLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.dateValue {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.dateDivider {
+  font-size: var(--font-size-xl);
+  color: var(--color-primary);
+}
