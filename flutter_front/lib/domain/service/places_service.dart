@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_front/config/app_config.dart';
 import 'package:flutter_front/domain/dto/place_dto.dart';
 
 /// 🍽️ 주변 맛집 서비스 (백엔드 호출)
@@ -6,7 +7,7 @@ import 'package:flutter_front/domain/dto/place_dto.dart';
 ///   ※ 구글 동기화는 서버 스케줄러(주 1회 + 기동 시)가 담당. 프론트는 DB만 읽는다.
 class PlacesService {
   // 안드로이드 에뮬레이터 전용 메인 백엔드 주소 (포트 8080)
-  final String _baseUrl = "http://10.0.2.2:8080/api/places";
+  final String _baseUrl = AppConfig.baseUrl + "/places";
   final Dio _dio = Dio();
 
   /// 특정 숙소 부근으로 저장된 맛집 조회 (내 DB)
