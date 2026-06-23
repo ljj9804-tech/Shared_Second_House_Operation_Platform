@@ -79,7 +79,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* 🟢 하단 하이라이트 버튼 섹션 (숙소, 배달, 장바구니 삼총사를 가로로 정렬) */}
+        {/* 🟢 하단 하이라이트 버튼 섹션 (기존 버튼들에 상품 스토어 버튼을 유기적으로 결합) */}
         <div 
           className={styles.moreWrap} 
           style={{ 
@@ -100,7 +100,25 @@ export default function Home() {
             숙소 목록 더 보러가기
           </button>
 
-          {/* 2. 🛒 장바구니 목록 이동 버튼 추가 */}
+          {/* 2. 🍔 [신규 추가] 푸드 & 서비스 상품 스토어 이동 버튼 */}
+          <div 
+            onClick={() => router.push('/product')}
+            className="cursor-pointer text-slate-700 hover:text-emerald-500 font-bold transition-colors duration-200"
+            style={{ 
+              padding: '10px 20px', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            🍔 상품 스토어 구경하기
+          </div>
+
+          {/* 3. 🛒 장바구니 목록 이동 버튼 */}
           <div 
             onClick={() => router.push('/cart')}
             className="cursor-pointer text-slate-700 hover:text-blue-500 font-bold transition-colors duration-200"
@@ -118,7 +136,7 @@ export default function Home() {
             🛒 장바구니 목록 이동
           </div>
 
-          {/* 3. 🚚 배달 관리 콘솔 이동 버튼 */}
+          {/* 4. 🚚 배달 관리 콘솔 이동 버튼 */}
           <div 
             onClick={() => router.push('/delivery')}
             className="cursor-pointer text-slate-700 hover:text-orange-500 font-bold transition-colors duration-200"
