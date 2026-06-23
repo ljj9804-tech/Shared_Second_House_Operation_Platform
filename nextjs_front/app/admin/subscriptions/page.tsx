@@ -29,14 +29,11 @@ export default function AdminSubscriptionsPage() {
   const [list, setList] = useState<SubscriptionsUserResp[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 필터 상태
   const [username, setUsername] = useState("");
   const [status, setStatus] = useState<SubscriptionStatus | "">("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // 👍 수정 포인트 1: fetchList가 현재 상태(state)를 매개변수나 스냅샷 형태로 안전하게 찌르도록 변경합니다.
-  // useCallback 의존성 배열에 필터 값들을 넣어 정석대로 작성합니다.
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
@@ -57,9 +54,6 @@ export default function AdminSubscriptionsPage() {
     }
   }, [username, status, startDate, endDate]);
 
-  // 👍 수정 포인트 2: 문제의 원인이었던 useEffect(line 81~86)를 완전히 제거하고,
-  // 관리자 권한 체크가 성공한 '동기적 시점'에서 곧바로 데이터를 호출하게 만듭니다.
-  // 이렇게 하면 렌더링이 꼬이지 않고, 에러의 근본적인 싹이 잘려 나갑니다.
   useEffect(() => {
     api
       .get<UserResp>("/api/users")
@@ -69,25 +63,24 @@ export default function AdminSubscriptionsPage() {
           return;
         }
         setAuthChecked(true);
-        // 권한 확인 통과 직후 여기서 바로 페칭을 때려줍니다!
         fetchList();
       })
       .catch(() => router.replace("/login"));
-  }, [router, fetchList]); // 정석대로 의존성 주입
+  }, [router, fetchList]);
 
+  // 👍 PUT으로 수정 (백엔드가 @PutMapping이므로 메서드를 맞춰줌)
   const handleApprove = async (id: number) => {
     if (!confirm("이 구독을 승인하시겠어요?")) return;
-    await api.patch(`/api/subscriptions/admin/${id}/approve`, {});
+    await api.put(`/api/subscriptions/admin/${id}/approve`, {});
     fetchList();
   };
 
   const handleReject = async (id: number) => {
     if (!confirm("이 구독을 반려하시겠어요?")) return;
-    await api.patch(`/api/subscriptions/admin/${id}/reject`, {});
+    await api.put(`/api/subscriptions/admin/${id}/reject`, {});
     fetchList();
   };
 
-  // 통계 계산
   const stats = {
     PENDING: list.filter((s) => s.status === "PENDING").length,
     ACTIVE: list.filter((s) => s.status === "ACTIVE").length,
@@ -106,7 +99,6 @@ export default function AdminSubscriptionsPage() {
   return (
     <div className="min-h-screen bg-[#F7F4EF] p-8">
       <div className="max-w-6xl mx-auto">
-        {/* 헤더 */}
         <div className="mb-5">
           <h1 className="text-lg font-medium text-[#2A2520]">구독 관리</h1>
           <p className="text-sm text-[#8C8178] mt-0.5">
@@ -114,7 +106,6 @@ export default function AdminSubscriptionsPage() {
           </p>
         </div>
 
-        {/* 통계 카드 */}
         <div className="grid grid-cols-4 gap-3 mb-5">
           <div className="bg-white border border-[#E4DDD3] rounded-lg p-4">
             <p className="text-xs text-[#8C8178] mb-1">승인 대기</p>
@@ -142,7 +133,6 @@ export default function AdminSubscriptionsPage() {
           </div>
         </div>
 
-        {/* 필터 */}
         <div className="flex gap-2 mb-4 flex-wrap">
           <input
             value={username}
@@ -184,7 +174,6 @@ export default function AdminSubscriptionsPage() {
           </button>
         </div>
 
-        {/* 테이블 */}
         <div className="bg-white border border-[#E4DDD3] rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
