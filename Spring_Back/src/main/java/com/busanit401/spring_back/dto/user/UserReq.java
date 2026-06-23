@@ -34,8 +34,6 @@ public class UserReq {
     private String phoneNumber;
 
 
-    private Role role;
-
     public static UserReq from(UserInfo userInfo){
         return UserReq.builder()
                 .username(userInfo.getUsername())
@@ -43,7 +41,6 @@ public class UserReq {
                 .nickname(userInfo.getNickname())
                 .email(userInfo.getEmail())
                 .phoneNumber(userInfo.getPhoneNumber())
-                .role(userInfo.getRole())
                 .build();
     }
 
