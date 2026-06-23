@@ -89,6 +89,10 @@ public class UserController {
     public ResponseEntity<?> updateUserProfile(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                @RequestBody @Valid UserSimpleReq dto, // [개선] @Valid 추가
                                                BindingResult bindingResult) {
+        log.info("PATCH 요청 도착");
+        log.info("userId = {}", userDetails.getId());
+        log.info("username = {}", dto.getUsername());
+        log.info("nickname = {}", dto.getNickname());
         if (bindingResult.hasErrors()) {
             return buildValidationErrorResponse(bindingResult);
         }

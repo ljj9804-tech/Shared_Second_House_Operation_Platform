@@ -22,23 +22,16 @@ async function parseError(res: Response): Promise<string> {
   }
 }
 
-async function reissueToken(): Promise<string | null> {
-  try {
-    const res = await fetch(`${BASE_URL}/api/users/refresh-token`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    tokenStorage.set(data.accessToken);
-    return data.accessToken;
-  } catch {
-    return null;
-  }
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const accessToken = tokenStorage.get();
+
+  console.log("========== API REQUEST ==========");
+  console.log("BASE_URL:", BASE_URL);
+  console.log("PATH:", path);
+  console.log("METHOD:", options.method);
+  console.log("FULL URL:", `${BASE_URL}${path}`);
+  console.log("TOKEN:", accessToken);
+  console.log("================================");
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
@@ -50,30 +43,22 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     credentials: "include",
   });
 
-  if (res.status === 401) {
-    const newToken = await reissueToken();
+  console.log("STATUS:", res.status);
 
-    if (!newToken) {
-      tokenStorage.remove();
-      window.location.href = "/login";
-      throw new Error("세션이 만료됐어요. 다시 로그인해 주세요.");
-    }
-
-    const retryRes = await fetch(`${BASE_URL}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${newToken}`,
-        ...options.headers,
-      },
-      credentials: "include",
-    });
-
-    if (!retryRes.ok) throw new Error(await parseError(retryRes));
-    return retryRes.json();
+  // 서버가 새 토큰을 내려주면 즉시 교체 (username 변경 등으로 재발급된 경우)
+  const newAuthHeader = res.headers.get("Authorization");
+  if (newAuthHeader?.startsWith("Bearer ")) {
+    const newToken = newAuthHeader.replace("Bearer ", "");
+    tokenStorage.set(newToken); // ⚠️ token.ts에 set 메소드명 확인 필요
+    console.log("TOKEN UPDATED:", newToken);
   }
 
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) {
+    const errorMessage = await parseError(res);
+    console.log("ERROR RESPONSE:", errorMessage);
+    throw new Error(errorMessage);
+  }
+
   return res.json();
 }
 
