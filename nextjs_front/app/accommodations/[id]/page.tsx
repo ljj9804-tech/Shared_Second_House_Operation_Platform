@@ -1,3 +1,39 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/accommodations/[id]/page.tsx
+ * 역할  : 숙소 상세 페이지 (이미지 슬라이더 + 섹션들 + 우측 고정 계산기)
+ * 사용처 : /accommodations/{id} 진입 시 렌더링
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - ImageSlider.tsx     : 이미지 슬라이더 컴포넌트
+ * - PriceTable.tsx      : 장기 계약 할인 가격표
+ * - LocationMap.tsx     : 주변 맛집 지도
+ * - HouseStructure.tsx  : 집 구조 정보
+ * - AmenityGrid.tsx     : 구성용품 아이콘 그리드
+ * - StorySection.tsx    : 스토리 섹션
+ * - app/lib/auth.ts     : api 인스턴스, TEMP_USER_ID
+ * - app/lib/constants.ts : MONTH_OPTIONS
+ * - Spring: StayAccommodationController.java : GET /api/stay/accommodations/{id}
+ * - Spring: StayStoryController.java         : GET /api/stay/stories/{id}
+ * - Spring: SubscriptionsController.java     : GET /api/subscriptions/my/{userId}
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소 상세 + 스토리 + 구독 상태 병렬 API 조회 (Promise.all)
+ * - 구독 상태(none/waiting/active/expired) 별 버튼 분기
+ * - 우측 사이드바: 팀수·개월수 선택 → 팀당 월세 실시간 계산
+ * - calcTeamPrice() 함수 export → AccommodationCard, SubscribePage에서 import
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입 → Promise.all([숙소, 스토리, 구독]) → 상태 설정
+ * → subscriptionStatus 분기 → 버튼 렌더링
+ * → 팀수/개월수 변경 → calcTeamPrice() → 팀당 월세 표시
+ * ----------------------------------------------------------------------------------
+ * [주의사항 / 참고]
+ * ⚠️ [TODO] 로그인 연동 후: TEMP_USER_ID → 로그인 유저 ID로 교체
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';

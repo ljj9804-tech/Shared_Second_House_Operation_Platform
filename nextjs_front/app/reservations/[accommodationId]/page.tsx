@@ -1,3 +1,39 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/reservations/[accommodationId]/page.tsx
+ * 역할  : 예약하기 페이지 (날짜 선택 달력 + 예약 생성)
+ * 사용처 : 숙소 상세 페이지 "예약하기" 버튼 클릭 시 이동 (구독 ACTIVE 상태 필수)
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - app/lib/auth.ts : api 인스턴스, TEMP_USER_ID
+ * - Spring: StayReservationController.java
+ *     GET  /api/stay/reservations/accommodation/{id} : 숙소별 확정 예약 목록 (달력용)
+ *     POST /api/stay/reservations                    : 예약 생성
+ * - Spring: SubscriptionsController.java
+ *     GET  /api/subscriptions/my/{userId}            : 내 구독 정보 (예약 가능 기간 확인)
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 구독 기간 내에서만 날짜 선택 가능 (minDate, maxDate 구독 기간 연동)
+ * - 이미 예약된 날짜(CONFIRMED) 달력에서 비활성화 표시
+ * - 시작일 선택 후 다음 예약 직전까지만 종료일 선택 가능 (dynamicMaxDate)
+ * - 최소 1박 2일 강제 (종료일 > 시작일)
+ * - 예약 실패 시 달력 즉시 갱신 (다른 사용자 예약 반영)
+ * - 탭 전환 후 돌아올 때 focus 이벤트로 달력 자동 갱신
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입 → Promise.all([구독, 예약목록]) → 구독 기간 설정 + 예약 날짜 비활성화
+ * → 시작일 선택 → dynamicMaxDate 계산 → 종료일 선택
+ * → "예약 확정" 클릭 → POST /api/stay/reservations
+ * → 성공: /my/reservations 이동 / 실패: 달력 즉시 갱신
+ * ----------------------------------------------------------------------------------
+ * [주의사항 / 참고]
+ * ⚠️ [TODO] 로그인 연동 후: TEMP_USER_ID → 로그인 유저 ID로 교체
+ * - parseLocalDate(): Spring LocalDate 배열([2026,6,25]) 또는 문자열 두 형태 모두 처리
+ * - formatLocalDate(): toISOString() 대신 로컬 기준 포맷 (UTC+9 하루 밀림 방지)
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
