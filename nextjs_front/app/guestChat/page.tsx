@@ -124,7 +124,10 @@ function GuestChatContent() {
 
   if (!chatRoomId) {
     return (
-      <div className="flex h-screen items-center justify-center text-red-500 font-bold">
+      <div
+        className="flex h-screen items-center justify-center font-bold"
+        style={{ color: "var(--color-danger)" }}
+      >
         잘못된 접근입니다. 방 번호(roomId)가 없습니다.
       </div>
     );
@@ -132,26 +135,53 @@ function GuestChatContent() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center text-gray-500">
+      <div
+        className="flex h-screen items-center justify-center"
+        style={{
+          color: "var(--color-text-muted)",
+          fontSize: "var(--font-size-base)",
+        }}
+      >
         채팅방 로딩 중...
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 max-w-md mx-auto border-x border-gray-200 shadow-lg">
-      <header className="bg-[#23399D] text-white p-4 text-center font-bold text-lg sticky top-0 shadow-sm">
+    <div
+      className="flex flex-col h-screen mx-auto border-x shadow-lg"
+      style={{
+        maxWidth: "var(--max-width)", // 레이아웃 규격 맞춤 (필요시 모바일 전용 모듈은 max-w-md 고정 가능)
+        backgroundColor: "var(--color-background)",
+        borderColor: "var(--color-border)",
+      }}
+    >
+      {/* 상단 헤더: 브랜드 메인 컬러 상속 및 공통 sticky 구조 연동 */}
+      <header
+        className="text-white p-4 text-center font-bold sticky top-0 z-50 shadow-sm"
+        style={{
+          backgroundColor: "var(--color-primary)",
+          fontSize: "var(--font-size-lg)",
+        }}
+      >
         {chatRoomId}번 게스트 단체방 (Web - Query)
       </header>
 
+      {/* 채팅 메시지 공간 */}
       <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-3">
-        <p className="text-center text-xs text-gray-400 bg-gray-100 py-1 rounded-full w-2/3 mx-auto">
+        <p
+          className="text-center text-xs py-1 rounded-full w-2/3 mx-auto"
+          style={{
+            backgroundColor: "var(--color-primary-light)",
+            color: "var(--color-primary)",
+            fontSize: "var(--font-size-sm)",
+          }}
+        >
           📢 실시간 단체 채팅방에 입장하셨습니다.
         </p>
 
         {messages.map((msg, index) => {
           const isMe = msg.senderId === senderId;
-
           const displayContent =
             msg.content || msg.messageContent || "내용 없음";
 
@@ -161,14 +191,28 @@ function GuestChatContent() {
               className={`flex ${isMe ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
-                  isMe
-                    ? "bg-[#D6E4FF] text-gray-800 rounded-tr-none"
-                    : "bg-white text-gray-800 rounded-tl-none border border-gray-100"
-                }`}
+                className={`max-w-[75%] px-4 py-2.5 shadow-sm`}
+                style={{
+                  fontSize: "var(--font-size-base)",
+                  lineHeight: "1.6",
+                  borderRadius: "var(--radius-md)",
+                  borderTopRightRadius: isMe ? "0px" : "var(--radius-md)",
+                  borderTopLeftRadius: isMe ? "var(--radius-md)" : "0px",
+                  backgroundColor: isMe
+                    ? "var(--color-primary-light)"
+                    : "var(--color-card-bg)",
+                  color: "var(--color-foreground)",
+                  border: isMe ? "none" : "1px solid var(--color-border)",
+                }}
               >
                 {!isMe && (
-                  <div className="text-xs font-bold text-[#23399D] mb-1">
+                  <div
+                    className="font-bold mb-1"
+                    style={{
+                      color: "var(--color-primary)",
+                      fontSize: "var(--font-size-sm)",
+                    }}
+                  >
                     {msg.senderName ||
                       msg.writer ||
                       msg.senderNickname ||
@@ -176,27 +220,47 @@ function GuestChatContent() {
                       "게스트"}
                   </div>
                 )}
-                <div className="break-all leading-relaxed">
-                  {displayContent}
-                </div>
+                <div className="break-all">{displayContent}</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="p-3 bg-white border-t border-gray-200 flex items-center gap-2">
+      {/* 하단 입력 폼 영역 */}
+      <div
+        className="p-3 flex items-center gap-2 border-t"
+        style={{
+          backgroundColor: "var(--color-background)",
+          borderColor: "var(--color-border)",
+        }}
+      >
         <input
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="메시지를 입력하세요..."
-          className="flex-1 bg-gray-50 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-[#23399D]"
+          className="flex-1 px-4 py-2 focus:outline-none transition-colors"
+          style={{
+            backgroundColor: "var(--color-card-bg)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-lg)",
+            fontSize: "var(--font-size-base)",
+            color: "var(--color-foreground)",
+          }}
         />
+        {/* 발송 버튼: .btn-sm 공통 클래스 기반에 형태 유지를 위한 일부 패딩 조정 */}
         <button
           onClick={handleSendMessage}
-          className="bg-[#23399D] text-white p-2 rounded-full"
+          className="btn-sm flex items-center justify-center"
+          style={{
+            width: "36px",
+            height: "36px",
+            padding: "0",
+            borderRadius: "50%" /* 원형 유지 */,
+            backgroundColor: "var(--color-primary)",
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -222,7 +286,10 @@ export default function GuestChatRoomPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center text-gray-400">
+        <div
+          className="flex h-screen items-center justify-center"
+          style={{ color: "var(--color-text-muted)" }}
+        >
           페이지 준비 중...
         </div>
       }
