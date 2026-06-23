@@ -7,9 +7,7 @@ import { StayAccommodationDto } from './accommodations/page';
 
 export default function Home() {
   const router = useRouter();
-  const [accommodations, setAccommodations] = useState<StayAccommodationDto[]>(
-    []
-  );
+  const [accommodations, setAccommodations] = useState<StayAccommodationDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,14 +79,62 @@ export default function Home() {
           </div>
         )}
 
-        {/* 숙소 목록 더 보기 버튼 */}
-        <div className={styles.moreWrap}>
+        {/* 🟢 하단 하이라이트 버튼 섹션 (숙소, 배달, 장바구니 삼총사를 가로로 정렬) */}
+        <div 
+          className={styles.moreWrap} 
+          style={{ 
+            display: 'flex', 
+            gap: '15px', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            marginTop: '30px'
+          }}
+        >
+          {/* 1. 숙소 목록 더보기 버튼 */}
           <button
             className="btn-outline"
             onClick={() => router.push('/accommodations')}
+            style={{ margin: 0 }}
           >
             숙소 목록 더 보러가기
           </button>
+
+          {/* 2. 🛒 장바구니 목록 이동 버튼 추가 */}
+          <div 
+            onClick={() => router.push('/cart')}
+            className="cursor-pointer text-slate-700 hover:text-blue-500 font-bold transition-colors duration-200"
+            style={{ 
+              padding: '10px 20px', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            🛒 장바구니 목록 이동
+          </div>
+
+          {/* 3. 🚚 배달 관리 콘솔 이동 버튼 */}
+          <div 
+            onClick={() => router.push('/delivery')}
+            className="cursor-pointer text-slate-700 hover:text-orange-500 font-bold transition-colors duration-200"
+            style={{ 
+              padding: '10px 20px', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            🚚 배달 관리 콘솔 이동
+          </div>
         </div>
       </section>
     </div>
