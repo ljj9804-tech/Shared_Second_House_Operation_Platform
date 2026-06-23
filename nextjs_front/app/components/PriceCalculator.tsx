@@ -1,4 +1,5 @@
 import styles from './PriceCalculator.module.css';
+import { MONTH_OPTIONS } from '@/app/lib/constants';
 
 interface PriceCalculatorProps {
   teams: number;
@@ -41,9 +42,9 @@ export default function PriceCalculator({
           value={months}
           onChange={(e) => onMonthsChange(Number(e.target.value))}
         >
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-            <option key={n} value={n}>
-              {n} 개월
+          {MONTH_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
             </option>
           ))}
         </select>

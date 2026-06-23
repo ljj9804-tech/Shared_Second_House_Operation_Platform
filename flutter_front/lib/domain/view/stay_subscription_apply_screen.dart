@@ -1,5 +1,35 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : lib/domain/view/stay_subscription_apply_screen.dart
+ * 역할  : 구독 신청 화면 (대표자 + 팀원 입력 → 구독 신청 요청)
+ * 사용처 : StayAccommodationDetailScreen 에서 "구독 신청하기" 버튼 탭 시 push
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - stay_subscription_service.dart      : applySubscription() 호출
+ * - stay_accommodation_dto.dart         : 숙소 정보 props
+ * - stay_constants.dart                 : kMonthOptionValues, monthOptionLabel
+ * - Spring: SubscriptionsController.java : POST /waiting/apply/{leaderId}
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소 정보 카드 표시 (이름, 주소, 월세)
+ * - 대표자 자동 설정 (AppConfig.tempUserId)
+ * - 팀원 추가 / 삭제 (TextEditingController 동적 관리)
+ * - 계약 개월수 드롭다운 선택
+ * - 팀당 월세 실시간 계산 (_calcTeamPrice)
+ * - 구독 신청 → 완료 시 이전 화면으로 pop
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입(accommodation props) → 대표자 자동 설정
+ * → 팀원 추가 → TextEditingController 생성 → 팀 인원 증가 → 가격 재계산
+ * → "구독 신청하기" → _handleSubmit() → POST /waiting/apply/{leaderId}
+ * → 성공: SnackBar + pop / 실패: 에러 SnackBar
+ * ==================================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
+import 'package:flutter_front/common/constants/stay_constants.dart';
 import 'package:flutter_front/common/widget/app_base_layout.dart';
 import 'package:flutter_front/common/widget/common_button.dart';
 import 'package:flutter_front/config/app_config.dart';
@@ -26,12 +56,6 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _addMember();
-  }
-
-  @override
   void dispose() {
     for (final c in _memberControllers) {
       c.dispose();
@@ -52,21 +76,25 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
     });
   }
 
+  // Next.js calcTeamPrice와 동일: discountRate 적용 후 팀 인원으로 나눔
+  int _calcTeamPrice(StayAccommodationDto item, int months, int teams) {
+    StayAccommodationPriceDto? priceInfo;
+    for (final p in item.prices) {
+      final maxMonths = p.maxMonths;
+      if (months >= p.minMonths && (maxMonths == null || months < maxMonths)) {
+        priceInfo = p;
+        break;
+      }
+    }
+    if (priceInfo == null) return (item.monthlyPrice / teams).floor();
+    return (item.monthlyPrice * (1 - priceInfo.discountRate) / teams).floor();
+  }
+
   Future<void> _handleSubmit() async {
     final memberIds = _memberControllers
         .map((c) => c.text.trim())
         .where((id) => id.isNotEmpty)
         .toList();
-
-    if (memberIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('팀원 ID를 최소 1명 이상 입력해주세요.'),
-          backgroundColor: AppColors.danger,
-        ),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
 
@@ -121,8 +149,8 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
             _buildReadonlyField('$_leaderId', hint: '※ 로그인한 유저가 대표자로 자동 설정됩니다.'),
             const SizedBox(height: 20),
 
-            // 팀원 ID 목록
-            _buildSectionTitle('함께할 팀원 ID'),
+            // 팀원 아이디 또는 이메일 목록
+            _buildSectionTitle('함께할 팀원 아이디 또는 이메일'),
             const SizedBox(height: 8),
             ..._memberControllers.asMap().entries.map((entry) {
               final index = entry.key;
@@ -134,9 +162,8 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
                     Expanded(
                       child: TextField(
                         controller: controller,
-                        keyboardType: TextInputType.number,
                         decoration: InputDecoration(
-                          hintText: '팀원 ${index + 1} ID 입력',
+                          hintText: '팀원 ${index + 1} 아이디 또는 이메일 입력',
                           hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
                           enabledBorder: OutlineInputBorder(
@@ -150,17 +177,15 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
                         ),
                       ),
                     ),
-                    if (_memberControllers.length > 1) ...[
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _removeMember(index),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(color: AppColors.dangerBg, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.close, size: 18, color: AppColors.danger),
-                        ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _removeMember(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(color: AppColors.dangerBg, borderRadius: BorderRadius.circular(8)),
+                        child: const Icon(Icons.close, size: 18, color: AppColors.danger),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               );
@@ -186,15 +211,15 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
                 value: _durationMonths,
                 isExpanded: true,
                 underline: const SizedBox.shrink(),
-                items: List.generate(12, (i) => i + 1)
-                    .map((n) => DropdownMenuItem(value: n, child: Text('$n 개월')))
+                items: kMonthOptionValues
+                    .map((n) => DropdownMenuItem(value: n, child: Text(monthOptionLabel(n))))
                     .toList(),
                 onChanged: (v) => setState(() => _durationMonths = v!),
               ),
             ),
             const SizedBox(height: 12),
 
-            // 예상 금액 안내
+            // 구독 요약
             _buildPriceSummary(item),
             const SizedBox(height: 32),
 
@@ -278,9 +303,9 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   }
 
   Widget _buildPriceSummary(StayAccommodationDto item) {
-    final filledCount = _memberControllers.where((c) => c.text.trim().isNotEmpty).length;
-    final teamCount = filledCount + 1; // 입력된 팀원 + 대표자
-    final monthlyPerTeam = (item.monthlyPrice / teamCount).floor();
+    // Next.js와 동일: 추가된 슬롯 수 전체를 팀원으로 계산 (빈 input 포함)
+    final teamCount = _memberControllers.length + 1; // 팀원 슬롯 + 대표자
+    final teamPrice = _calcTeamPrice(item, _durationMonths, teamCount);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -291,16 +316,18 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
       ),
       child: Column(
         children: [
+          _priceRow('원래 월세', '${_fmt(item.monthlyPrice)}원 / 월'),
+          const SizedBox(height: 6),
           _priceRow('팀 인원', '$teamCount명 (대표자 포함)'),
           const SizedBox(height: 6),
-          _priceRow('계약 기간', '$_durationMonths개월'),
+          _priceRow('계약 기간', monthOptionLabel(_durationMonths)),
           Divider(height: 20, color: AppColors.primaryBorder),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('팀당 월세', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
               Text(
-                '${_fmt(monthlyPerTeam)}원 / 월',
+                teamPrice > 0 ? '${_fmt(teamPrice)}원 / 월' : '-',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary),
               ),
             ],

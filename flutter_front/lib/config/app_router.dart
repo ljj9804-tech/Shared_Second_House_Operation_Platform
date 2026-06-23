@@ -81,6 +81,8 @@ class AppRouter extends StatelessWidget {
                 builder: (_) => StayReservationCalendarScreen(
                   accommodationId: args['accommodationId'],
                   accommodationName: args['accommodationName'],
+                  subscriptionStartDate: args['subscriptionStartDate'] as DateTime?,
+                  subscriptionEndDate: args['subscriptionEndDate'] as DateTime?,
                 ),
               );
             }

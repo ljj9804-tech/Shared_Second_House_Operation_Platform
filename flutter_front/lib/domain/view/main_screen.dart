@@ -1,3 +1,32 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : lib/domain/view/main_screen.dart
+ * 역할  : 앱 메인 화면 — 홈 탭 / 내 예약 탭 / AI 챗봇 탭을 IndexedStack으로 관리
+ * 사용처 : app_router.dart → '/' 루트
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - stay_accommodation_controller.dart  : 숙소 목록 + 구독 목록 (Provider)
+ * - stay_accommodation_detail_screen.dart : 숙소 카드 탭 시 이동
+ * - stay_reservation_calendar_screen.dart : 구독 카드 "예약하기" 탭 시 이동
+ * - stay_my_reservation_screen.dart       : BottomNavigationBar [내 예약] 탭
+ * - guest_chat_bot_screen.dart            : BottomNavigationBar [AI 챗봇] 탭
+ * ----------------------------------------------------------------------------------
+ * [홈 탭 구성]
+ * ① 내 구독 숙소 섹션
+ *    - ACTIVE 구독만 표시 (PENDING·EXPIRED·CANCELLED 숨김)
+ *    - ACTIVE 없으면 섹션 전체 숨김
+ *    - PENDING 건수는 "⏳ 승인 대기 중 N건" 텍스트로만 안내
+ *    - 1개 → 100% 너비 카드 / 복수 → 가로 슬라이드
+ *    - 예약하기 버튼에 subscriptionStartDate, subscriptionEndDate 전달 (달력 범위 제한용)
+ * ② 우리가 머물 집 섹션 — 전체 숙소 가로 슬라이드 (최대 5개)
+ * ----------------------------------------------------------------------------------
+ * [주의사항]
+ * ⚠️ [TODO] 로그인 연동 후 AppConfig.tempUserId → 실제 userId로 교체
+ * ⚠️ DevScreenLinks 위젯은 개발 완료 후 삭제 예정
+ * ==================================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
@@ -103,6 +132,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBody(StayAccommodationController ctrl) {
     final accommodations = ctrl.accommodations.take(5).toList();
     final subscribedAccommodations = ctrl.mySubscribedAccommodations;
+    final pendingCount = ctrl.mySubscriptions.where((s) => s.status == 'PENDING').length;
 
     return SingleChildScrollView(
       child: Column(
@@ -110,17 +140,33 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           const SizedBox(height: 20),
 
-          // 내 구독 숙소 섹션 (구독 멤버만 보임)
+          // 내 구독 숙소 섹션 (ACTIVE만 표시)
           if (subscribedAccommodations.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text('내 구독 숙소', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
             ),
+            // const SizedBox(height: 12),
+            if (pendingCount > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    const Text('⏳', style: TextStyle(fontSize: 13)),
+                    const SizedBox(width: 6),
+                    Text(
+                      '승인 대기 중 $pendingCount건',
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: 12),
             if (subscribedAccommodations.length == 1)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildSubscribedCard(subscribedAccommodations.first, fullWidth: true),
+                child: _buildSubscribedCard(ctrl, subscribedAccommodations.first, fullWidth: true),
               )
             else
               SizedBox(
@@ -129,9 +175,10 @@ class _MainScreenState extends State<MainScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: subscribedAccommodations.length,
-                  itemBuilder: (_, index) => _buildSubscribedCard(subscribedAccommodations[index]),
+                  itemBuilder: (_, index) => _buildSubscribedCard(ctrl, subscribedAccommodations[index]),
                 ),
               ),
+
             const SizedBox(height: 28),
           ],
 
@@ -185,7 +232,11 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildSubscribedCard(StayAccommodationDto item, {bool fullWidth = false}) {
+  Widget _buildSubscribedCard(StayAccommodationController ctrl, StayAccommodationDto item, {bool fullWidth = false}) {
+    final activeSub = ctrl.activeSubscriptionFor(item.id);
+    final subStart = activeSub != null ? _parseDate(activeSub.startDate) : null;
+    final subEnd = activeSub != null ? _parseDate(activeSub.endDate) : null;
+
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StayAccommodationDetailScreen(accommodationId: item.id))),
       child: Container(
@@ -226,7 +277,14 @@ class _MainScreenState extends State<MainScreen> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => StayReservationCalendarScreen(accommodationId: item.id, accommodationName: item.name)),
+                        MaterialPageRoute(
+                          builder: (_) => StayReservationCalendarScreen(
+                            accommodationId: item.id,
+                            accommodationName: item.name,
+                            subscriptionStartDate: subStart,
+                            subscriptionEndDate: subEnd,
+                          ),
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -245,6 +303,15 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
     );
+  }
+
+  DateTime? _parseDate(String dateStr) {
+    if (dateStr.isEmpty) return null;
+    try {
+      return DateTime.parse(dateStr);
+    } catch (_) {
+      return null;
+    }
   }
 
   Widget _buildAccommodationCard(StayAccommodationDto item) {

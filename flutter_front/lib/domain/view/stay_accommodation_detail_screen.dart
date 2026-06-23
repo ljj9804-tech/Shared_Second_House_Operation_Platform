@@ -1,9 +1,41 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : lib/domain/view/stay_accommodation_detail_screen.dart
+ * 역할  : 숙소 상세 화면 — 이미지 슬라이더, 가격 계산기, 스토리, 지도, 바텀바 CTA
+ * 사용처 : MainScreen, StayAccommodationListScreen 에서 카드 탭 시 push
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - stay_accommodation_controller.dart  : 숙소 상세 + 구독 목록 로드 (Provider)
+ * - stay_reservation_calendar_screen.dart : "예약하기" 탭 시 push
+ * - stay_subscription_apply_screen.dart   : "구독 신청" 탭 시 push
+ * - stay_constants.dart                   : kMonthOptionValues, monthOptionLabel
+ * - price_calculator.dart                 : 팀당 월세 계산 유틸
+ * - Spring: StayAccommodationController   : GET /api/stay/accommodations/{id}
+ * - Spring: SubscriptionsUserController   : GET /api/subscriptions/my/{userId}
+ * ----------------------------------------------------------------------------------
+ * [바텀바 CTA — 구독 상태 4분기]
+ * ┌─────────────────┬─────────────────────────────────────────────────────────────┐
+ * │ subscriptionStatus │ 버튼                                                      │
+ * ├─────────────────┼─────────────────────────────────────────────────────────────┤
+ * │ none            │ 구독 신청 → StaySubscriptionApplyScreen push                │
+ * │ waiting         │ 승인 대기 중 (비활성)                                        │
+ * │ active          │ 예약하기 → StayReservationCalendarScreen push               │
+ * │ expired         │ 재구독하기 → StaySubscriptionApplyScreen push               │
+ * └─────────────────┴─────────────────────────────────────────────────────────────┘
+ * ----------------------------------------------------------------------------------
+ * [주의사항]
+ * ⚠️ [TODO] 로그인 연동 후 AppConfig.tempUserId → 실제 userId로 교체
+ * ==================================================================================
+ */
+
 import 'package:flutter/material.dart';
 import 'package:flutter_front/domain/controller/restaurant_controller.dart';
 import 'package:flutter_front/domain/dto/place_dto.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
+import 'package:flutter_front/common/constants/stay_constants.dart';
 import 'package:flutter_front/common/widget/bottom_sheet_selector.dart';
 import 'package:flutter_front/config/app_config.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
@@ -38,7 +70,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       if (!mounted) return;
       await context
           .read<StayAccommodationController>()
-          .loadAccommodationDetail(widget.accommodationId);
+          .loadAccommodationDetail(widget.accommodationId, AppConfig.tempUserId);
       if (!mounted) return;
       final accommodation =
           context.read<StayAccommodationController>().selectedAccommodation;
@@ -245,21 +277,21 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
             children: [
               Expanded(
                 child: BottomSheetSelector(
-                  label: '개월수',
-                  value: _months,
-                  options: List.generate(12, (i) => i + 1),
-                  displayText: (v) => '$v개월',
-                  onSelected: (v) => setState(() => _months = v),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: BottomSheetSelector(
                   label: '팀수',
                   value: _teams,
                   options: List.generate(12, (i) => i + 1),
                   displayText: (v) => '$v팀',
                   onSelected: (v) => setState(() => _teams = v),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: BottomSheetSelector(
+                  label: '개월수',
+                  value: _months,
+                  options: kMonthOptionValues,
+                  displayText: monthOptionLabel,
+                  onSelected: (v) => setState(() => _months = v),
                 ),
               ),
             ],
@@ -484,7 +516,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        // borderRadius: BorderRadius.circular(12),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Column(
@@ -495,9 +527,11 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: Image.network(
                 story.imageUrl!.startsWith('http') ? story.imageUrl! : '${AppConfig.imageBaseUrl}${story.imageUrl}',
-                height: 180,
+                // 1. 고정 높이(height) 제거하여 Auto 상태로 전환
+                // height: 180,
                 width: double.infinity,
-                fit: BoxFit.cover,
+                fit: BoxFit.fitWidth, // 2. 가로에 맞추고 세로는 원본 비율 유지
+                // fit: BoxFit.cover,
                 errorBuilder: (context, err, _) => const SizedBox.shrink(),
               ),
             ),
@@ -521,6 +555,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
 
 
   Widget _buildBottomBar(StayAccommodationDto item) {
+    final ctrl = context.read<StayAccommodationController>();
     final teamPrice = PriceCalculator.calculateTeamPrice(
       monthlyPrice: item.monthlyPrice,
       months: _months,
@@ -528,6 +563,49 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       prices: item.prices,
     );
     final isAvailable = item.status == 'AVAILABLE';
+    final subStatus = ctrl.subscriptionStatusFor(item.id);
+
+    Widget actionButton;
+    if (!isAvailable) {
+      actionButton = _ctaButton(label: '점검중', onPressed: null);
+    } else {
+      switch (subStatus) {
+        case 'waiting':
+          actionButton = _ctaButton(label: '승인 대기 중', onPressed: null);
+        case 'active':
+          final activeSub = ctrl.activeSubscriptionFor(item.id);
+          actionButton = _ctaButton(
+            label: '예약하기',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => StayReservationCalendarScreen(
+                  accommodationId: item.id,
+                  accommodationName: item.name,
+                  subscriptionStartDate: activeSub != null ? _parseDate(activeSub.startDate) : null,
+                  subscriptionEndDate: activeSub != null ? _parseDate(activeSub.endDate) : null,
+                ),
+              ),
+            ),
+          );
+        case 'expired':
+          actionButton = _ctaButton(
+            label: '재구독하기',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => StaySubscriptionApplyScreen(accommodation: item)),
+            ),
+          );
+        default: // 'none'
+          actionButton = _ctaButton(
+            label: '구독 신청',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => StaySubscriptionApplyScreen(accommodation: item)),
+            ),
+          );
+      }
+    }
 
     return SafeArea(
       child: Container(
@@ -543,45 +621,39 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('월 ${_fmt(teamPrice)}원', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                Text('팀당 · $_months개월 · $_teams팀 기준', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                Text('팀당 · ${monthOptionLabel(_months)} · $_teams팀 기준', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
               ],
             ),
             const SizedBox(width: 12),
-            // 구독 신청 버튼
-            Expanded(
-              child: ElevatedButton(
-                onPressed: isAvailable
-                    ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => StaySubscriptionApplyScreen(accommodation: item)))
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('구독 신청', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // 예약 버튼
-            Expanded(
-              child: ElevatedButton(
-                onPressed: isAvailable
-                    ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => StayReservationCalendarScreen(accommodationId: item.id, accommodationName: item.name)))
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('예약하기', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              ),
-            ),
+            Expanded(child: actionButton),
           ],
         ),
       ),
     );
+  }
+
+  Widget _ctaButton({required String label, required VoidCallback? onPressed}) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        disabledBackgroundColor: Colors.grey.shade300,
+        disabledForegroundColor: Colors.grey.shade600,
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  DateTime? _parseDate(String dateStr) {
+    if (dateStr.isEmpty) return null;
+    try {
+      return DateTime.parse(dateStr);
+    } catch (_) {
+      return null;
+    }
   }
 
   String _fmt(int price) {
