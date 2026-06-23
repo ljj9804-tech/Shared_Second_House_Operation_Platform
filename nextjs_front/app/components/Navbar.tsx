@@ -18,6 +18,9 @@ export default function Navbar() {
           <Link href="/accommodations" className={styles.navItem}>
             숙소 목록
           </Link>
+          <Link href="/mypage" className={styles.navItem}>
+            마이페이지
+          </Link>
           <Link href="/my/reservations" className={styles.navItem}>
             내 예약 (userId: {TEMP_USER_ID})
           </Link>
