@@ -14,7 +14,7 @@ interface ChatMessage {
   sources?: ChatBotSource[];
 }
 
-const STORAGE_KEY = "chatbot_messages";
+export const STORAGE_KEY = "chatbot_messages";
 const WELCOME: ChatMessage = {
   text: "안녕하세요! 세컨하우스 운영 FAQ 챗봇입니다. 궁금한 점을 물어보세요. 🙂",
   isMe: false,

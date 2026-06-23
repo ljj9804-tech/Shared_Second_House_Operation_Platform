@@ -29,10 +29,15 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
+import 'package:flutter_front/domain/controller/route_controller.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
+import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
+import 'package:flutter_front/domain/dto/stay_reservation_dto.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
@@ -50,18 +55,160 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  bool _arrivalMonitorStarted = false; // 도착 감지 중복 시작 방지
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StayAccommodationController>().loadAccommodationsAndFaqs(userId: AppConfig.tempUserId);
+      // 이동경로 버튼 활성화 판단(예약 기간)을 위해 내 예약도 로드
+      context.read<StayReservationController>().loadMyReservations();
+      // 로그인 직후에만 새로 생성되는 화면이므로, 여기서 챗봇 대화를 초기화해
+      // 이전 사용자(로그아웃 전)의 대화가 남지 않게 한다.
+      context.read<ChatBotController>().clear();
     });
+  }
+
+  /// 현재 날짜가 기간 내(취소 아님)인 예약 목록
+  List<StayReservationDto> _activeReservations(StayReservationController resCtrl) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return resCtrl.reservations.where((r) {
+      if (r.isCancelled) return false;
+      final s = DateTime.tryParse(r.startDate);
+      final e = DateTime.tryParse(r.endDate);
+      if (s == null || e == null) return false;
+      // 시작일 ~ 종료일(당일 포함)
+      return !today.isBefore(s) && !today.isAfter(e);
+    }).toList();
+  }
+
+  /// 활성 예약 숙소의 좌표 — 예약의 accommodationId로 숙소 목록에서 좌표를 찾는다.
+  LatLng? _activeReservationCoord(
+      StayAccommodationController accomCtrl, StayReservationController resCtrl) {
+    for (final r in _activeReservations(resCtrl)) {
+      for (final a in accomCtrl.accommodations) {
+        if (a.id == r.accommodationId &&
+            a.latitude != null &&
+            a.longitude != null) {
+          return LatLng(a.latitude!, a.longitude!);
+        }
+      }
+    }
+    return null;
+  }
+
+  /// 활성 예약 숙소 좌표가 준비되면 근접 감지를 시작한다.
+  /// (예약 기간 중 + 그 숙소 50m 이내에 들어와야 '이동경로 보기' 버튼이 활성화됨)
+  void _maybeStartProximityMonitor(LatLng? coord) {
+    if (_arrivalMonitorStarted || coord == null) return;
+    _arrivalMonitorStarted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<RouteController>().startProximityMonitoring(coord);
+    });
+  }
+
+  /// 이동경로 화면 진입 — 누른 시점에 예약이 취소되진 않았는지 최신 상태로 재확인
+  Future<void> _openRoute(BuildContext context) async {
+    final resCtrl = context.read<StayReservationController>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    // 캐시가 아닌 최신 예약 상태로 다시 조회 (다른 화면/웹에서 취소됐을 수 있음)
+    await resCtrl.loadMyReservations();
+    if (!mounted) return;
+
+    if (_activeReservations(resCtrl).isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('예약이 취소되었거나 예약 기간이 아니에요. 이동경로를 볼 수 없어요.'),
+        ),
+      );
+      return; // 재조회로 reservations가 갱신되며 버튼도 비활성화됨
+    }
+    navigator.pushNamed('/route');
+  }
+
+  /// '내 이동경로 보기' 진입 카드
+  /// 예약 기간 중 + 그 예약 숙소 50m 이내일 때만 활성화
+  Widget _buildRouteEntry(BuildContext context) {
+    final near = context.watch<RouteController>().isNearAccommodation;
+    final resCtrl = context.watch<StayReservationController>();
+    final hasActiveReservation = _activeReservations(resCtrl).isNotEmpty;
+    final enabled = hasActiveReservation && near;
+
+    // 비활성 사유 안내 (예약 기간 우선, 그다음 거리)
+    final String hint = !hasActiveReservation
+        ? '예약 기간 중에만 이용할 수 있어요'
+        : '예약 숙소 50m 이내에서 활성화돼요';
+
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.55,
+      child: InkWell(
+        onTap: enabled ? () => _openRoute(context) : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: enabled ? AppColors.primaryLight : AppColors.cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled ? AppColors.primary : AppColors.textHint,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.route,
+                  color: enabled ? AppColors.primary : AppColors.textHint),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('내 이동경로 보기',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: enabled
+                                ? AppColors.textPrimary
+                                : AppColors.textHint)),
+                    if (!enabled)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(hint,
+                            style: const TextStyle(
+                                fontSize: 12, color: AppColors.textHint)),
+                      ),
+                  ],
+                ),
+              ),
+              Icon(enabled ? Icons.chevron_right : Icons.lock_outline,
+                  size: enabled ? 24 : 18,
+                  color: enabled ? AppColors.primary : AppColors.textHint),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 하단 탭 선택 — 홈 탭을 누르면 예약을 최신으로 다시 불러온다.
+  /// (앱이 켜진 채로 두면 initState가 다시 안 돌아 새로고침이 안 되는 문제 해결)
+  void _onTabSelected(int index) {
+    setState(() => _currentIndex = index);
+    if (index == 0) {
+      context.read<StayReservationController>().loadMyReservations();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<StayAccommodationController>();
+    final resCtrl = context.watch<StayReservationController>();
+    // 활성 예약 숙소 좌표가 준비되면 근접 감지 시작
+    _maybeStartProximityMonitor(_activeReservationCoord(ctrl, resCtrl));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -75,7 +222,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: _onTabSelected,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textHint,
         backgroundColor: Colors.white,
@@ -138,6 +285,13 @@ class _MainScreenState extends State<MainScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 20),
+
+          // 🗺️ 내 이동경로 보기 (숙소 50m 이내일 때만 활성화)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildRouteEntry(context),
+          ),
           const SizedBox(height: 20),
 
           // 내 구독 숙소 섹션 (ACTIVE만 표시)
