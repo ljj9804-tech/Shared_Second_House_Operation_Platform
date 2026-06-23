@@ -3,6 +3,7 @@ package com.busanit401.spring_back.controller;
 import com.busanit401.spring_back.domain.entity.GuestChatMessage;
 import com.busanit401.spring_back.domain.entity.GuestChatRoom;
 import com.busanit401.spring_back.domain.service.GuestChatService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.log4j.Log4j2;
@@ -24,6 +25,7 @@ public class GuestChatController {
      * GET http://localhost:8080/api/guest/chat/room/{houseId}
      */
     @GetMapping("/room/{houseId}")
+    @Operation(summary = "채팅방 번호 조회")
     public ResponseEntity<GuestChatRoom> getRoomInfo(@PathVariable("houseId") Long houseId) {
         log.info("[API GET] 채팅방 정보 조회 요청 - 하우스 ID: {}", houseId);
         GuestChatRoom chatRoom = guestChatService.getChatRoom(houseId);
@@ -35,6 +37,7 @@ public class GuestChatController {
      * GET http://localhost:8080/api/guest/chat/history/{chatRoomId}
      */
     @GetMapping("/history/{chatRoomId}")
+    @Operation(summary = "과거 채팅 내역 불러오기")
     public ResponseEntity<List<GuestChatMessage>> getChatHistory(@PathVariable("chatRoomId") Long chatRoomId) {
         log.info("[API GET] 과거 대화 내역 조회 요청 - 채팅방 ID: {}", chatRoomId);
         List<GuestChatMessage> history = guestChatService.getChatHistory(chatRoomId);
