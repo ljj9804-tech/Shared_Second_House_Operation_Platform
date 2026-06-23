@@ -13,11 +13,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations`)
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations?page=0&size=3`)
       .then((r) => r.json())
       .then((data) => {
         console.log('[Home] 숙소 목록:', data);
-        setAccommodations(data);
+        setAccommodations(data.content ?? []);
       })
       .catch((err) => console.log('[Home] 데이터 조회 실패:', err))
       .finally(() => setLoading(false));
@@ -34,7 +34,7 @@ export default function Home() {
           <div className={styles.loading}>불러오는 중...</div>
         ) : (
           <div className={styles.grid}>
-            {accommodations.slice(0, 3).map((accommodation) => (
+            {accommodations.map((accommodation) => (
               <div
                 key={accommodation.id}
                 className={styles.card}

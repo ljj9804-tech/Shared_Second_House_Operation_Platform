@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
+import api, { TEMP_USER_ID } from '@/app/lib/auth';
 
 interface ReservationDto {
   id: number;
+  accommodationId: number;
+  accommodationName: string;
+  accommodationAddress: string;
   startDate: string;
   endDate: string;
   status: 'CONFIRMED' | 'CANCELLED';
-  stayAccommodation: {
-    id: number;
-    name: string;
-    address: string;
-  };
 }
 
 export default function MyReservationsPage() {
@@ -20,11 +19,12 @@ export default function MyReservationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/reservations`)
-      .then((r) => r.json())
+    api
+      .get(`/api/stay/reservations?userId=${TEMP_USER_ID}`)
+      .then((r) => r.data)
       .then((data) => {
         console.log('내 예약 목록:', data);
-        setReservations(data);
+        setReservations(Array.isArray(data) ? data : []);
       })
       .catch((err) => console.log('예약 목록 조회 실패:', err))
       .finally(() => setLoading(false));
@@ -34,16 +34,8 @@ export default function MyReservationsPage() {
   const handleCancel = (id: number) => {
     if (!confirm('예약을 취소할까요?')) return;
 
-    fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/reservations/${id}/cancel`,
-      {
-        method: 'PATCH',
-      }
-    )
-      .then((r) => {
-        if (!r.ok) throw new Error('취소 실패');
-        return r.text(); // json() 대신 text()로 변경
-      })
+    api
+      .patch(`/api/stay/reservations/${id}/cancel?userId=${TEMP_USER_ID}`)
       .then(() => {
         console.log('예약 취소 완료:', id);
         // 취소된 예약 상태 업데이트
@@ -67,26 +59,32 @@ export default function MyReservationsPage() {
         <div className={styles.empty}>예약 내역이 없어요.</div>
       ) : (
         <div className={styles.list}>
-          {reservations.map((reservation) => (
+          {reservations?.map((reservation) => (
             <div key={reservation.id} className={styles.card}>
               {/* 숙소 정보 */}
               <div className={styles.cardHeader}>
                 <h2 className={styles.accommodationName}>
-                  {reservation.stayAccommodation?.name}
+                  {reservation.accommodationName}
                 </h2>
                 <span
                   className={
-                    reservation.status === 'CONFIRMED'
-                      ? styles.statusConfirmed
-                      : styles.statusCancelled
+                    reservation.status === 'CANCELLED'
+                      ? styles.statusCancelled
+                      : new Date(reservation.endDate) < new Date()
+                        ? styles.statusExpired
+                        : styles.statusConfirmed
                   }
                 >
-                  {reservation.status === 'CONFIRMED' ? '예약 확정' : '취소됨'}
+                  {reservation.status === 'CANCELLED'
+                    ? '취소됨'
+                    : new Date(reservation.endDate) < new Date()
+                      ? '지난 예약'
+                      : '예약 확정'}
                 </span>
               </div>
 
               <p className={styles.address}>
-                {reservation.stayAccommodation?.address}
+                {reservation.accommodationAddress}
               </p>
 
               {/* 예약 날짜 */}
@@ -106,15 +104,16 @@ export default function MyReservationsPage() {
                 </div>
               </div>
 
-              {/* 취소 버튼 */}
-              {reservation.status === 'CONFIRMED' && (
-                <button
-                  className="btn-danger"
-                  onClick={() => handleCancel(reservation.id)}
-                >
-                  예약 취소
-                </button>
-              )}
+              {/* 취소 버튼 - 미래 예약만 표시 */}
+              {reservation.status === 'CONFIRMED' &&
+                new Date(reservation.startDate) > new Date() && (
+                  <button
+                    className="btn-danger"
+                    onClick={() => handleCancel(reservation.id)}
+                  >
+                    예약 취소
+                  </button>
+                )}
             </div>
           ))}
         </div>

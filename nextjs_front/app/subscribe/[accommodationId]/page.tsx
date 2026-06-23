@@ -1,3 +1,31 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/subscribe/[accommodationId]/page.tsx
+ * 역할  : 구독 신청 페이지 (대표자 + 팀원 입력 → 구독 신청 요청)
+ * 사용처 : 숙소 상세 페이지에서 "구독 신청하기" 버튼 클릭 시 이동
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - app/accommodations/[id]/page.tsx         : calcTeamPrice import 출처
+ * - Spring: StayAccommodationController.java : GET /api/stay/accommodations/{id}
+ * - Spring: SubscriptionsController.java     : POST /api/waiting/apply/{leaderId}
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소 정보 조회 및 표시 (이름, 주소, 월세)
+ * - 대표자 자동 설정 (TEMP_USER_ID)
+ * - 팀원 추가 / 삭제 (0명부터 자유롭게)
+ * - 계약 개월수 선택 (1~12개월)
+ * - 팀당 월세 실시간 계산 (대표자 포함 총 인원 기준)
+ * - 구독 신청 요청 → 완료 시 상세 페이지로 이동
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입 → GET /api/stay/accommodations/{id} → 숙소 정보 표시
+ *       → 팀원 추가/삭제 → totalMembers 변경 → 팀당 월세 재계산
+ *       → 구독 신청 버튼 → POST /api/waiting/apply/{leaderId}
+ *       → 완료 → /accommodations/{id} 이동
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,6 +36,7 @@ import {
   StayAccommodationPriceDto,
 } from '../../accommodations/page';
 import { calcTeamPrice } from '../../accommodations/[id]/page';
+import api, { TEMP_USER_ID } from '@/app/lib/auth';
 
 export default function SubscribePage() {
   const params = useParams();
@@ -20,11 +49,10 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState(true);
 
   // 폼 상태
-  const [memberIds, setMemberIds] = useState<string[]>(['']);
+  const [memberIds, setMemberIds] = useState<string[]>([]);
   const [durationMonths, setDurationMonths] = useState(1);
 
-  // TODO [인증]: userId 하드코딩 → JWT 토큰에서 실제 userId 추출로 교체
-  const leaderId = 1;
+  const leaderId = TEMP_USER_ID;
 
   // 팀 인원 (대표자 + 입력된 팀원)
   const totalMembers = memberIds.length + 1;
@@ -40,10 +68,8 @@ export default function SubscribePage() {
     : 0;
 
   useEffect(() => {
-    fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations/${accommodationId}`
-    )
-      .then((r) => r.json())
+    api.get(`/api/stay/accommodations/${accommodationId}`)
+      .then((r) => r.data)
       .then((data) => {
         console.log('숙소 데이터:', data);
         setAccommodation(data);
@@ -78,12 +104,8 @@ export default function SubscribePage() {
 
     console.log('구독 신청 요청:', body);
 
-    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/waiting/apply/${leaderId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-      .then((r) => r.json())
+    api.post(`/api/waiting/apply/${leaderId}`, body)
+      .then((r) => r.data)
       .then((data) => {
         console.log('구독 신청 완료:', data);
         alert('구독 신청이 완료됐어요! 관리자 승인을 기다려주세요.');
@@ -134,14 +156,12 @@ export default function SubscribePage() {
                 value={memberId}
                 onChange={(e) => updateMember(index, e.target.value)}
               />
-              {memberIds.length > 1 && (
-                <button
-                  className="btn-danger"
-                  onClick={() => removeMember(index)}
-                >
-                  삭제
-                </button>
-              )}
+              <button
+                className="btn-danger"
+                onClick={() => removeMember(index)}
+              >
+                삭제
+              </button>
             </div>
           ))}
           <button className="btn-secondary" onClick={addMember}>
