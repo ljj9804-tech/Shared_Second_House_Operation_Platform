@@ -1,3 +1,30 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/accommodations/[id]/components/LocationMap.tsx
+ * 역할  : 숙소 주변 맛집을 Google Maps로 표시하는 지도 컴포넌트
+ * 사용처 : app/accommodations/[id]/page.tsx
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - LocationMap.module.css              : 지도 레이아웃 스타일
+ * - Spring: PlacesController.java       : GET /api/places/restaurants?accommodationId=
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소별 저장된 맛집 목록 조회 (백엔드 DB 기반, Google API 직접 호출 없음)
+ * - 숙소 위치 파란색 마커 표시
+ * - 맛집 마커 인기도 순위에 따라 색상 구분 (상위 빨강 / 10등 이하 주황)
+ * - 마커 클릭 시 InfoWindow로 맛집 이름, 업종, 영업시간, 구글지도 링크 표시
+ * - 오늘 요일 기준 영업시간 추출 (TodayHoursLine)
+ * - "숙소 위치로" 버튼으로 지도 중심 재이동 (RecenterButton)
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * props(accommodationId, lat, lng) 수신
+ * → useEffect → GET /api/places/restaurants?accommodationId=
+ * → places 상태 업데이트 → 마커 렌더링
+ * → 마커 클릭 → setSelectedPlace → InfoWindow 표시
+ * ==================================================================================
+ */
+
 "use client";
 
 import styles from "./LocationMap.module.css";

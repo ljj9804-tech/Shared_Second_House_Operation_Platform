@@ -16,6 +16,22 @@
   margin-bottom: 32px;
 }
 
+.calendarHint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+.calendarWarning {
+  font-size: var(--font-size-sm);
+  color: #b45309;
+  background-color: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
 .calendarWrap {
   display: flex;
   justify-content: center;
