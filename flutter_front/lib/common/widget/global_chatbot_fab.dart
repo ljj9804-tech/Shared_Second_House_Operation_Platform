@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/domain/view/guest_chat_bot_screen.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 
 /// 🤖 앱 전역 플로팅 챗봇 버튼
 ///
@@ -24,14 +26,23 @@ class GlobalChatbotFab {
     return Stack(
       children: [
         child ?? const SizedBox.shrink(),
-        ValueListenableBuilder<bool>(
-          valueListenable: isOpen,
-          builder: (context, open, _) {
-            if (open) return const SizedBox.shrink();
-            return Positioned(
-              right: 16,
-              bottom: 24,
-              child: SafeArea(child: _ChatbotButton()),
+        // 로그인(authenticated) 상태에서만 챗봇 버튼을 노출한다.
+        // (로그인/회원가입 등 미인증 화면에서는 숨김)
+        Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            if (auth.status != AuthStatus.authenticated) {
+              return const SizedBox.shrink();
+            }
+            return ValueListenableBuilder<bool>(
+              valueListenable: isOpen,
+              builder: (context, open, _) {
+                if (open) return const SizedBox.shrink();
+                return Positioned(
+                  right: 16,
+                  bottom: 24,
+                  child: SafeArea(child: _ChatbotButton()),
+                );
+              },
             );
           },
         ),

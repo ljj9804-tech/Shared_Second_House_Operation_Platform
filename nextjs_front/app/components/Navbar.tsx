@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import styles from "./Navbar.module.css";
-import { TEMP_USER_ID } from "@/app/lib/auth";
 
 export default function Navbar() {
   return (
@@ -22,7 +21,7 @@ export default function Navbar() {
             마이페이지
           </Link>
           <Link href="/my/reservations" className={styles.navItem}>
-            내 예약 (userId: {TEMP_USER_ID})
+            내 예약
           </Link>
         </nav>
       </div>
