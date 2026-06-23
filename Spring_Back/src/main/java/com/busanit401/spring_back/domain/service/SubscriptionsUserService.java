@@ -10,6 +10,8 @@ import com.busanit401.spring_back.exception.InvalidStateException;
 import com.busanit401.spring_back.enums.SubscriptionStatus;
 import com.busanit401.spring_back.domain.repository.SubscriptionsUserRepository;
 import com.busanit401.spring_back.domain.repository.UserRepository;
+import com.busanit401.spring_back.domain.repository.WaitingSubscriptionUserRepository;
+import com.busanit401.spring_back.enums.MemberStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class SubscriptionsUserService {
 
     private final SubscriptionsUserRepository subscriptionsUserRepository;
     private final UserRepository userRepository;
+    private final WaitingSubscriptionUserRepository waitingSubscriptionUserRepository;
 
 
     // 관리자 - 구독 승인
@@ -78,9 +81,25 @@ public class SubscriptionsUserService {
 
 
     // 내 구독 목록 조회
+    // [수정 이유] 기존 코드는 subscriptions_user.user_id = userId (대표자만) 조회 2026-06-20
+    //            → 멤버로 참여한 구독은 반환되지 않아 멤버 유저가 구독 상태를 확인할 수 없었음
+    //            → waiting_subscription_user에서 APPROVED된 구독도 함께 반환하도록 수정
     public List<SubscriptionsUserResp> getMySubscriptions(Long userId) {
-        return subscriptionsUserRepository.findAllByUserId(userId)
-                .stream()
+        // 대표자로 신청한 구독
+        List<SubscriptionsUser> leaderSubscriptions =
+                subscriptionsUserRepository.findAllByUserId(userId);
+
+        // 멤버로 참여하고 APPROVED된 구독
+        List<SubscriptionsUser> memberSubscriptions =
+                waitingSubscriptionUserRepository.findAllByUserIdAndStatus(userId, MemberStatus.APPROVED)
+                        .stream()
+                        .map(w -> w.getSubscriptionsUser())
+                        .distinct()
+                        .collect(Collectors.toList());
+
+        // 합치고 중복 제거 후 반환
+        return java.util.stream.Stream.concat(leaderSubscriptions.stream(), memberSubscriptions.stream())
+                .distinct()
                 .map(SubscriptionsUserResp::from)
                 .collect(Collectors.toList());
     }
