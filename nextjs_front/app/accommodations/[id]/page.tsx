@@ -1,3 +1,42 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/accommodations/[id]/page.tsx
+ * 역할  : 숙소 상세 페이지 (이미지 슬라이더 + 섹션들 + 우측 고정 계산기)
+ * 사용처 : /accommodations/{id} 진입 시 렌더링
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - ImageSlider.tsx     : 이미지 슬라이더 컴포넌트
+ * - PriceTable.tsx      : 장기 계약 할인 가격표
+ * - LocationMap.tsx     : 주변 맛집 지도
+ * - HouseStructure.tsx  : 집 구조 정보
+ * - AmenityGrid.tsx     : 구성용품 아이콘 그리드
+ * - StorySection.tsx    : 스토리 섹션
+ * - lib/api.ts          : fetch 기반 API 클라이언트 (Bearer 토큰 자동 첨부)
+ * - lib/token.ts        : tokenStorage (localStorage accessToken)
+ * - types/auth.ts       : UserResp 타입 (userId 획득용)
+ * - app/lib/constants.ts : MONTH_OPTIONS
+ * - Spring: StayAccommodationController.java : GET /api/stay/accommodations/{id}  (permitAll)
+ * - Spring: StayStoryController.java         : GET /api/stay/stories/{id}         (permitAll)
+ * - Spring: SubscriptionsController.java     : GET /api/subscriptions/my/{userId} (인증 필요)
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소 상세 + 스토리 + 구독 상태 병렬 API 조회 (Promise.all)
+ * - 구독 상태(none/waiting/active/expired) 별 버튼 분기
+ * - 우측 사이드바: 팀수·개월수 선택 → 팀당 월세 실시간 계산
+ * - calcTeamPrice() 함수 export → AccommodationCard, SubscribePage에서 import
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입 → tokenStorage 확인
+ *   [비로그인] → 숙소+스토리만 조회 → subscriptionStatus='none' (구독하러가기 버튼)
+ *   [로그인]   → 숙소+스토리+userId 병렬 조회 → subscriptions 조회 → 상태 분기
+ * → 팀수/개월수 변경 → calcTeamPrice() → 팀당 월세 표시
+ * ----------------------------------------------------------------------------------
+ * [주의사항 / 참고]
+ * - lib/api.ts는 401 시 리프레시 시도 후 /login 리다이렉트 → 비로그인 판별은 tokenStorage로
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -5,7 +44,9 @@ import { useParams, useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { StayAccommodationDto, StayAccommodationPriceDto } from '../page';
 
-import api, { TEMP_USER_ID } from '@/app/lib/auth';
+import { api } from '@/lib/api';
+import { tokenStorage } from '@/lib/token';
+import { UserResp } from '@/types/auth';
 import { MONTH_OPTIONS } from '@/app/lib/constants';
 import ImageSlider from './components/ImageSlider';
 import PriceTable from './components/PriceTable';
@@ -25,6 +66,11 @@ export interface StayStoryDto {
 
 // 구독 상태 타입
 type SubscriptionStatus = 'none' | 'waiting' | 'active' | 'expired';
+
+interface SubscriptionItemDto {
+  accommodationId: number;
+  status: string;
+}
 
 // 팀당 월세 계산 함수
 export function calcTeamPrice(
@@ -57,52 +103,58 @@ export default function AccommodationDetailPage() {
   const [teams, setTeams] = useState(1);
   const [months, setMonths] = useState(1);
 
-  const userId = TEMP_USER_ID;
-
   useEffect(() => {
     if (!id) return;
 
-    // 병렬 API 호출
-    Promise.all([
-      api.get(`/api/stay/accommodations/${id}`).then((r) => r.data),
-      api.get(`/api/stay/stories/${id}`).then((r) => r.data),
-      api.get(`/api/subscriptions/my/${userId}`).then((r) => r.data),
-    ])
-      .then(([accommodationData, storiesData, subscriptionData]) => {
-        console.log('숙소 데이터:', accommodationData);
-        console.log('스토리 데이터:', storiesData);
-        console.log('구독 데이터:', subscriptionData);
+    const token = tokenStorage.get();
 
-        setAccommodation(accommodationData);
-        setStories(storiesData);
-
-        // 현재 숙소에 해당하는 구독만 필터링
-        const matched =
-          Array.isArray(subscriptionData)
-            ? subscriptionData.find(
-                (s: { accommodationId: number }) =>
-                  s.accommodationId === Number(id)
-              )
+    if (token) {
+      // 로그인 상태: 숙소 + 스토리 + userId 병렬 조회 후 구독 상태 확인
+      Promise.all([
+        api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
+        api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
+        api.get<UserResp>('/api/users'),
+      ])
+        .then(([accommodationData, storiesData, userData]) => {
+          setAccommodation(accommodationData);
+          setStories(storiesData);
+          return api.get<SubscriptionItemDto[]>(
+            `/api/subscriptions/my/${userData.userId}`
+          );
+        })
+        .then((subscriptionData) => {
+          const matched = Array.isArray(subscriptionData)
+            ? subscriptionData.find((s) => s.accommodationId === Number(id))
             : null;
 
-        if (!matched) {
+          if (!matched) setSubscriptionStatus('none');
+          else if (matched.status === 'PENDING')
+            setSubscriptionStatus('waiting');
+          else if (matched.status === 'ACTIVE') setSubscriptionStatus('active');
+          else if (matched.status === 'EXPIRED')
+            setSubscriptionStatus('expired');
+          else setSubscriptionStatus('none');
+        })
+        .catch((err) => {
+          console.log('상세 페이지 데이터 조회 실패:', err);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      // 비로그인 상태: 공개 데이터만 조회 (구독 상태는 none)
+      Promise.all([
+        api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
+        api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
+      ])
+        .then(([accommodationData, storiesData]) => {
+          setAccommodation(accommodationData);
+          setStories(storiesData);
           setSubscriptionStatus('none');
-        } else if (matched.status === 'PENDING') {
-          setSubscriptionStatus('waiting');
-        } else if (matched.status === 'ACTIVE') {
-          setSubscriptionStatus('active');
-        } else if (matched.status === 'EXPIRED') {
-          setSubscriptionStatus('expired');
-        } else {
-          setSubscriptionStatus('none');
-        }
-      })
-      .catch((err) => {
-        console.log('상세 페이지 데이터 조회 실패:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+        })
+        .catch((err) => {
+          console.log('상세 페이지 데이터 조회 실패:', err);
+        })
+        .finally(() => setLoading(false));
+    }
   }, [id]);
 
   if (loading) return <div className={styles.loading}>불러오는 중...</div>;
@@ -143,6 +195,7 @@ export default function AccommodationDetailPage() {
             accommodationId={accommodation.id}
             latitude={accommodation.latitude}
             longitude={accommodation.longitude}
+            address={accommodation.address}
           />
 
           {/* 섹션3: 집 구조 */}
@@ -168,7 +221,9 @@ export default function AccommodationDetailPage() {
         {/* 우측 고정 계산기 */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarInner}>
-            <h2 className={styles.sidebarTitle}>{accommodation.name}</h2>
+            <h2 className={styles.sidebarTitle}>
+              월세 자동 계산기{/* {accommodation.name} */}
+            </h2>
 
             {/* 팀수 선택 */}
             <div className={styles.selectGroup}>

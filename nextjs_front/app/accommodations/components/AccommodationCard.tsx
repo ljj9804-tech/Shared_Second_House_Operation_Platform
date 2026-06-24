@@ -101,11 +101,14 @@ export default function AccommodationCard({
         <div className={styles.priceWrap}>
           {teamPrice > 0 ? (
             <>
-              <span className={styles.priceLabel}>팀당 월세</span>
-              <span className={styles.price}>
-                {teamPrice.toLocaleString()}원
-              </span>
-              <span className={styles.priceUnit}>/ 개월</span>
+              <p className={styles.priceBase}>
+                월 {accommodation.monthlyPrice.toLocaleString()}원
+              </p>
+              <p className={styles.priceTeam}>
+                팀당 월세&nbsp;
+                <span className={styles.price}>{teamPrice.toLocaleString()}원</span>
+                <span className={styles.priceUnit}>&nbsp;/ {months}개월 기준</span>
+              </p>
             </>
           ) : (
             <span className={styles.priceEmpty}>가격 정보 없음</span>
