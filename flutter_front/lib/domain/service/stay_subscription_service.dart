@@ -18,10 +18,10 @@
  */
 
 import 'package:dio/dio.dart';
-import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/core/api/dio_client.dart';
 
 class SubscriptionService {
-  final Dio _dio = Dio(BaseOptions(baseUrl: AppConfig.baseUrl));
+  Dio get _dio => DioClient.instance.dio;
 
   /// 구독 신청 - POST /waiting/apply/{leaderId}
   /// body: { accommodationId, durationMonths, memberIdentifiers: [userId, ...] }
@@ -44,6 +44,7 @@ class SubscriptionService {
   /// 내 구독 목록 조회 - GET /subscriptions/my/{userId}
   Future<List<dynamic>> getMySubscriptions(int userId) async {
     final response = await _dio.get('/subscriptions/my/$userId');
+    if (response.data is! List) return [];
     return response.data as List;
   }
 

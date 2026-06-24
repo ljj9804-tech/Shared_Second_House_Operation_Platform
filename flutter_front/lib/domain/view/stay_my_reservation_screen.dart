@@ -22,6 +22,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/widget/app_base_layout.dart';
 import 'package:flutter_front/common/widget/common_button.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
 import 'package:flutter_front/domain/dto/stay_reservation_dto.dart';
 
@@ -37,7 +38,9 @@ class _StayMyReservationScreenState extends State<StayMyReservationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StayReservationController>().loadMyReservations();
+      context.read<StayReservationController>().loadMyReservations(
+        context.read<AuthProvider>().userId!,
+      );
     });
   }
 
@@ -181,7 +184,7 @@ class _StayMyReservationScreenState extends State<StayMyReservationScreen> {
       ),
     );
     if (confirmed == true && mounted) {
-      final success = await ctrl.cancelReservation(id);
+      final success = await ctrl.cancelReservation(id, context.read<AuthProvider>().userId!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(success ? '예약이 취소되었습니다.' : ctrl.errorMessage ?? '취소에 실패했습니다.'),

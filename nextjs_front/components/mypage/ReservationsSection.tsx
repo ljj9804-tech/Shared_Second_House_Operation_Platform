@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import ReservationRouteMap from "@/app/my/reservations/components/ReservationRouteMap";
 
 interface ReservationDto {
   id: number;
@@ -10,7 +11,7 @@ interface ReservationDto {
   accommodationAddress: string;
   startDate: string;
   endDate: string;
-  status: 'CONFIRMED' | 'CANCELLED';
+  status: "CONFIRMED" | "CANCELLED";
 }
 
 export default function ReservationsSection() {
@@ -19,31 +20,31 @@ export default function ReservationsSection() {
 
   useEffect(() => {
     api
-      .get<ReservationDto[]>('/api/stay/reservations')
+      .get<ReservationDto[]>("/api/stay/reservations")
       .then((data) => setReservations(Array.isArray(data) ? data : []))
-      .catch((err) => console.log('예약 목록 조회 실패:', err))
+      .catch((err) => console.log("예약 목록 조회 실패:", err))
       .finally(() => setLoading(false));
   }, []);
 
   const handleCancel = (id: number) => {
-    if (!confirm('예약을 취소할까요?')) return;
+    if (!confirm("예약을 취소할까요?")) return;
 
     api
       .patch<boolean>(`/api/stay/reservations/${id}/cancel`, {})
       .then(() => {
         setReservations((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, status: 'CANCELLED' } : r))
+          prev.map((r) => (r.id === id ? { ...r, status: "CANCELLED" } : r)),
         );
       })
-      .catch(() => alert('예약 취소에 실패했어요. 다시 시도해주세요.'));
+      .catch(() => alert("예약 취소에 실패했어요. 다시 시도해주세요."));
   };
 
   const getStatusLabel = (r: ReservationDto) => {
-    if (r.status === 'CANCELLED')
-      return { label: '취소됨', cls: 'bg-[#F0EBE5] text-[#8C8178]' };
+    if (r.status === "CANCELLED")
+      return { label: "취소됨", cls: "bg-[#F0EBE5] text-[#8C8178]" };
     if (new Date(r.endDate) < new Date())
-      return { label: '지난 예약', cls: 'bg-[#fef3c7] text-[#92400e]' };
-    return { label: '예약 확정', cls: 'bg-[#EAF3DE] text-[#3B6D11]' };
+      return { label: "지난 예약", cls: "bg-[#fef3c7] text-[#92400e]" };
+    return { label: "예약 확정", cls: "bg-[#EAF3DE] text-[#3B6D11]" };
   };
 
   if (loading) {
@@ -93,12 +94,12 @@ export default function ReservationsSection() {
         reservations.map((r, i) => {
           const { label, cls } = getStatusLabel(r);
           const isFuture =
-            r.status === 'CONFIRMED' && new Date(r.startDate) > new Date();
+            r.status === "CONFIRMED" && new Date(r.startDate) > new Date();
 
           return (
             <div
               key={r.id}
-              className={`px-5 py-4 ${i < reservations.length - 1 ? 'border-b border-[#F0EBE5]' : ''}`}
+              className={`px-5 py-4 ${i < reservations.length - 1 ? "border-b border-[#F0EBE5]" : ""}`}
             >
               {/* 숙소명 + 상태 */}
               <div className="flex items-center justify-between mb-1">
@@ -147,6 +148,12 @@ export default function ReservationsSection() {
                   예약 취소
                 </button>
               )}
+              {/* 이 예약 기간에 기록된 이동경로 지도 (경로 없으면 자동 숨김) */}
+              <ReservationRouteMap
+                accommodationId={r.accommodationId}
+                startDate={r.startDate}
+                endDate={r.endDate}
+              />
             </div>
           );
         })

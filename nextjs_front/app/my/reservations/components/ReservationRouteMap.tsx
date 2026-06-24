@@ -188,6 +188,7 @@ export default function ReservationRouteMap({
                 gestureHandling="greedy"
                 disableDefaultUI
                 zoomControl
+                scrollwheel={false} // 1. 휠로 확대되는 건 끈다! (스크롤 방해 금지)
               >
                 <RoutePolylines sessions={selectedSessions} />
               </GMap>
