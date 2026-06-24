@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------------------
  * [기능 목록]
  * - 숙소 정보 카드 표시 (이름, 주소, 월세)
- * - 대표자 자동 설정 (AppConfig.tempUserId)
+ * - 대표자 자동 설정 (로그인한 사용자 userId)
  * - 팀원 추가 / 삭제 (TextEditingController 동적 관리)
  * - 계약 개월수 드롭다운 선택
  * - 팀당 월세 실시간 계산 (_calcTeamPrice)
@@ -28,11 +28,12 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/constants/stay_constants.dart';
 import 'package:flutter_front/common/widget/app_base_layout.dart';
 import 'package:flutter_front/common/widget/common_button.dart';
-import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
 import 'package:flutter_front/domain/service/stay_subscription_service.dart';
 
@@ -48,8 +49,7 @@ class StaySubscriptionApplyScreen extends StatefulWidget {
 class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScreen> {
   final SubscriptionService _service = SubscriptionService();
 
-  // TODO [인증]: JWT 연동 후 실제 userId로 교체
-  final int _leaderId = AppConfig.tempUserId;
+  int get _leaderId => context.read<AuthProvider>().userId!;
 
   final List<TextEditingController> _memberControllers = [];
   int _durationMonths = 1;
@@ -303,8 +303,8 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   }
 
   Widget _buildPriceSummary(StayAccommodationDto item) {
-    // Next.js와 동일: 추가된 슬롯 수 전체를 팀원으로 계산 (빈 input 포함)
-    final teamCount = _memberControllers.length + 1; // 팀원 슬롯 + 대표자
+    final filledCount = _memberControllers.where((c) => c.text.trim().isNotEmpty).length;
+    final teamCount = filledCount + 1; // 실제 입력된 팀원 + 대표자
     final teamPrice = _calcTeamPrice(item, _durationMonths, teamCount);
 
     return Container(
@@ -318,7 +318,7 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
         children: [
           _priceRow('원래 월세', '${_fmt(item.monthlyPrice)}원 / 월'),
           const SizedBox(height: 6),
-          _priceRow('팀 인원', '$teamCount명 (대표자 포함)'),
+          _priceRow('팀 인원', '$teamCount명 (대표자 포함, 입력 완료 기준)'),
           const SizedBox(height: 6),
           _priceRow('계약 기간', monthOptionLabel(_durationMonths)),
           Divider(height: 20, color: AppColors.primaryBorder),
