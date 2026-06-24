@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/core/storage/secure_storage.dart';
 import 'package:flutter_front/domain/service/route_service.dart';
 import 'package:flutter_front/service/location_track_handler.dart';
 
@@ -64,14 +66,18 @@ class RouteController extends ChangeNotifier {
       // 1. 위치 서비스 + 권한 확인
       if (!await _ensurePermissions()) return false;
 
-      // 2. 백엔드에 세션 생성
-      _sessionId = await _service.startSession(AppConfig.tempUserId);
+      // 2. 백엔드에 세션 생성 (유저는 서버가 JWT로 식별 — 미로그인 시 401로 실패)
+      _sessionId = await _service.startSession();
       _points.clear();
 
-      // 3. 추적 isolate에 넘길 값 저장 (dotenv가 없는 isolate를 위해 baseUrl도 전달)
+      // 3. 추적 isolate에 넘길 값 저장 (dotenv/DioClient가 없는 isolate를 위해
+      //    baseUrl과 accessToken을 직접 전달 — addPoints가 토큰을 헤더로 붙인다)
       await FlutterForegroundTask.saveData(key: 'sessionId', value: _sessionId!);
       await FlutterForegroundTask.saveData(
           key: 'baseUrl', value: AppConfig.baseUrl);
+      final accessToken = await SecureStorage.instance.getAccessToken();
+      await FlutterForegroundTask.saveData(
+          key: 'accessToken', value: accessToken ?? '');
 
       // 4. isolate 통신 포트 + 좌표 수신 콜백 등록
       FlutterForegroundTask.initCommunicationPort();
@@ -94,6 +100,18 @@ class RouteController extends ChangeNotifier {
 
       _isTracking = true;
       return true;
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 401 || code == 403) {
+        _error = '로그인이 필요해요. 다시 로그인한 뒤 시도해 주세요.';
+      } else if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        _error = '서버에 연결할 수 없어요. 네트워크와 서버 주소를 확인해 주세요.';
+      } else {
+        _error = '추적 시작 중 오류 (코드 ${code ?? '-'})';
+      }
+      return false;
     } catch (e) {
       _error = '추적 시작 중 오류: $e';
       return false;
@@ -191,6 +209,17 @@ class RouteController extends ChangeNotifier {
       await Geolocator.requestPermission();
     }
     return true;
+  }
+
+  /// 앱 시작 시 위치 권한을 미리 확보한다.
+  /// 예약/근접 감지와 무관하게 첫 진입에서 한 번 요청해, 권한 팝업이 늦게 뜨는 문제를 막는다.
+  /// (근접 감지에는 '사용 중 허용'이면 충분하므로 여기선 거기까지만 요청)
+  Future<void> ensureLocationPermission() async {
+    if (!await Geolocator.isLocationServiceEnabled()) return;
+    LocationPermission perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      await Geolocator.requestPermission();
+    }
   }
 
   /// 근접 감지 시작 — 숙소 좌표를 받아 위치 모니터링을 건다.
