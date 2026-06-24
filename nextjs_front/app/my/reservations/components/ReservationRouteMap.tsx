@@ -15,17 +15,17 @@
  * ==================================================================================
  */
 
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import {
   APIProvider,
   Map as GMap,
   useMap,
   useMapsLibrary,
-} from '@vis.gl/react-google-maps';
-import api, { TEMP_USER_ID } from '@/app/lib/auth';
-import styles from './ReservationRouteMap.module.css';
+} from "@vis.gl/react-google-maps";
+import styles from "./ReservationRouteMap.module.css";
+import { api } from "@/lib/api";
 
 interface RoutePoint {
   lat: number;
@@ -52,7 +52,7 @@ interface Props {
 }
 
 // 세션별 색상 구분
-const ROUTE_COLORS = ['#245B10', '#1565C0', '#C62828', '#6A1B9A', '#EF6C00'];
+const ROUTE_COLORS = ["#245B10", "#1565C0", "#C62828", "#6A1B9A", "#EF6C00"];
 
 export default function ReservationRouteMap({
   accommodationId,
@@ -67,14 +67,15 @@ export default function ReservationRouteMap({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // 1) 마운트 시 경로 데이터 로드 — 있어야만 버튼을 보여주므로 먼저 받아둔다.
+  //    유저는 서버에서 JWT로 획득하므로 from~to 기간만 보낸다.
   useEffect(() => {
     let alive = true;
     api
-      .get(
-        `/api/routes/sessions/detail?userId=${TEMP_USER_ID}&from=${startDate}&to=${endDate}`,
+      .get<RouteSessionDetail[]>(
+        `/api/routes/sessions/detail?from=${startDate}&to=${endDate}`,
       )
-      .then((r) => {
-        if (alive) setSessions(Array.isArray(r.data) ? r.data : []);
+      .then((data) => {
+        if (alive) setSessions(Array.isArray(data) ? data : []);
       })
       .catch(() => {
         if (alive) setSessions([]);
@@ -89,7 +90,7 @@ export default function ReservationRouteMap({
     const m = new Map<string, RouteSessionDetail[]>();
     (sessions ?? []).forEach((s) => {
       if (!s.points?.length) return;
-      const d = (s.startedAt ?? '').slice(0, 10);
+      const d = (s.startedAt ?? "").slice(0, 10);
       if (!d) return;
       if (!m.has(d)) m.set(d, []);
       m.get(d)!.push(s);
@@ -120,17 +121,19 @@ export default function ReservationRouteMap({
     setMounted(true); // 이후로는 닫아도 언마운트하지 않음
     if (coord === null && !mapError) {
       api
-        .get(`/api/stay/accommodations/${accommodationId}`)
-        .then((r) => {
-          const lat = r.data?.latitude;
-          const lng = r.data?.longitude;
-          if (typeof lat === 'number' && typeof lng === 'number') {
+        .get<{ latitude?: number; longitude?: number }>(
+          `/api/stay/accommodations/${accommodationId}`,
+        )
+        .then((d) => {
+          const lat = d?.latitude;
+          const lng = d?.longitude;
+          if (typeof lat === "number" && typeof lng === "number") {
             setCoord({ lat, lng });
           } else {
-            setMapError('숙소 위치 정보가 없어요.');
+            setMapError("숙소 위치 정보가 없어요.");
           }
         })
-        .catch(() => setMapError('숙소 위치를 불러오지 못했어요.'));
+        .catch(() => setMapError("숙소 위치를 불러오지 못했어요."));
     }
   };
 
@@ -144,7 +147,7 @@ export default function ReservationRouteMap({
         className={styles.toggle}
         onClick={() => (open ? setOpen(false) : openMap())}
       >
-        {open ? '이동경로 숨기기 ▴' : '이동경로 보기 ▾'}
+        {open ? "이동경로 숨기기 ▴" : "이동경로 보기 ▾"}
       </button>
 
       {/* 한 번 펼친 뒤엔 언마운트하지 않고 숨기기만 한다(지도 재마운트 비용 방지) */}
@@ -176,12 +179,12 @@ export default function ReservationRouteMap({
 
           {/* 숙소 좌표가 준비되면 지도를 한 번만 마운트 (줌15·숙소 중심) */}
           {coord && (
-            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY || ''}>
+            <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY || ""}>
               <GMap
                 className={styles.map}
                 defaultZoom={15}
                 defaultCenter={coord}
-                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || 'DEMO_MAP_ID'}
+                mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || "DEMO_MAP_ID"}
                 gestureHandling="greedy"
                 disableDefaultUI
                 zoomControl
@@ -198,7 +201,7 @@ export default function ReservationRouteMap({
 
 // "2026-06-24" -> "6/24"
 function dateLabel(d: string) {
-  const [, m, day] = d.split('-');
+  const [, m, day] = d.split("-");
   return `${Number(m)}/${Number(day)}`;
 }
 
@@ -209,7 +212,7 @@ function dateLabel(d: string) {
  */
 function RoutePolylines({ sessions }: { sessions: RouteSessionDetail[] }) {
   const map = useMap();
-  const mapsLib = useMapsLibrary('maps'); // google.maps가 로드됐는지 보장
+  const mapsLib = useMapsLibrary("maps"); // google.maps가 로드됐는지 보장
 
   useEffect(() => {
     if (!map || !mapsLib) return;

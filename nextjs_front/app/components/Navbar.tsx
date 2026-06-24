@@ -19,21 +19,37 @@
  * ==================================================================================
  */
 
-import { useEffect, useState } from "react";
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import styles from "./Navbar.module.css";
-import { TEMP_USER_ID } from "@/app/lib/auth";
+import { tokenStorage } from "@/lib/token";
 import { api } from "@/lib/api";
 import { UserResp } from "@/types/auth";
 
 export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const [user, setUser] = useState<UserResp | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
+    const token = tokenStorage.get();
+    if (!token) {
+      setUser(null);
+      setAuthLoading(false);
+      return;
+    }
+
     api
       .get<UserResp>("/api/users")
-      .then((user) => {
-        setIsAdmin(user.role === "ADMIN");
+      .then((data) => {
+        console.log("[Navbar] 로그인 유저:", data);
+        setIsAdmin(data.role === "ADMIN");
+        setUser(data);
       })
       .catch(() => {
 seonggyu
@@ -49,11 +65,16 @@ seonggyu
     router.push('/');
   };
 const isAdmin = true;
-=======
-        // 비로그인 상태 등 - admin 아님으로 처리, Navbar는 정상 노출
         setIsAdmin(false);
-      });
-  }, []);
+      })
+      .finally(() => setAuthLoading(false));
+  }, [pathname]);
+
+  const handleLogout = () => {
+    tokenStorage.remove();
+    setUser(null);
+    router.push("/");
+  };
 
 middle
   return (

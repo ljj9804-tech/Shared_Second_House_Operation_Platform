@@ -4,12 +4,15 @@ import com.busanit401.spring_back.domain.service.RouteService;
 import com.busanit401.spring_back.dto.RoutePointDTO;
 import com.busanit401.spring_back.dto.RouteSessionDTO;
 import com.busanit401.spring_back.dto.RouteSessionDetailDTO;
+import com.busanit401.spring_back.security.auth.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -80,16 +83,15 @@ public class RouteController {
     }
 
     @Operation(summary = "💻 [Next.js] 기간별 경로 조회 (세션+좌표 묶음)",
-            description = "예약 기간 등 from~to 날짜 범위에 시작된 세션과 각 좌표를 한 번에 반환한다.")
+            description = "예약 기간 등 from~to 날짜 범위에 시작된 세션과 각 좌표를 한 번에 반환한다. 유저는 JWT에서 획득한다.")
     @GetMapping("/sessions/detail")
     public ResponseEntity<List<RouteSessionDetailDTO>> getSessionsWithPoints(
-            @Parameter(description = "유저 id", example = "1")
-            @RequestParam Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "시작 날짜 (yyyy-MM-dd)", example = "2026-06-01")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "종료 날짜 (yyyy-MM-dd, 포함)", example = "2026-06-30")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        return ResponseEntity.ok(routeService.getSessionsWithPoints(userId, from, to));
+        return ResponseEntity.ok(routeService.getSessionsWithPoints(userDetails.getId(), from, to));
     }
 }
