@@ -5,7 +5,6 @@ import com.busanit401.spring_back.dto.user.SocialUserRequest;
 import com.busanit401.spring_back.domain.repository.UserRepository;
 import com.busanit401.spring_back.security.auth.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -14,14 +13,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -32,30 +29,15 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2UserInfo userInfo = getOAuth2UserInfo(registrationId, attributes);
 
-        String username = userInfo.getProvider() + "_" + userInfo.getProviderId();
+        User user = createUserFromUserInfo(userInfo);
 
-        User user = userRepository.findByUsername(username)
-                .orElseGet(() -> {
-                    String nickname = generateUniqueNickname(userInfo.getName());
-                    User newUser = User.from(SocialUserRequest.from(userInfo, nickname), passwordEncoder);
-                    return userRepository.save(newUser);
-                });
+        if (!userRepository.existsByUsername(user.getUsername())) {
+            userRepository.save(user);
+        } else {
+            updateUser(user);
+        }
 
         return new CustomUserDetails(user, attributes);
-    }
-
-    /**
-     * 닉네임이 이미 존재하면 숫자를 붙여서 고유한 닉네임을 만든다.
-     * 예: "이재욱" 중복 시 "이재욱1", "이재욱2" ...
-     */
-    private String generateUniqueNickname(String baseName) {
-        String nickname = baseName;
-        int suffix = 1;
-        while (userRepository.existsByNickname(nickname)) {
-            nickname = baseName + suffix;
-            suffix++;
-        }
-        return nickname;
     }
 
     private OAuth2UserInfo getOAuth2UserInfo(String registrationId, Map<String, Object> attributes) {
@@ -66,5 +48,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else {
             throw new OAuth2AuthenticationException("Unsupported provider: " + registrationId);
         }
+    }
+
+    private User createUserFromUserInfo(OAuth2UserInfo userInfo) {
+
+        return User.from(SocialUserRequest.from(userInfo));
+    }
+
+    private void updateUser(User user) {
+        // 필요시 사용자 정보를 업데이트하는 로직 추가
+        // 예: user.setLastLogin(new Date());
+        userRepository.save(user);
     }
 }
