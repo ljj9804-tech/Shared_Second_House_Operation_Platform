@@ -65,21 +65,23 @@ public class TourService {
 
             // 💡 2. 외부 API가 준 전체 데이터 개수 확인 (isLast 판별용 변수)
             int totalCount = 0;
-            if (bodyMap.get("totalCount") != null) {
-                totalCount = Integer.parseInt(String.valueOf(bodyMap.get("totalCount")));
+            try {
+                if (bodyMap.get("totalCount") != null) {
+                    totalCount = Integer.parseInt(String.valueOf(bodyMap.get("totalCount")));
+                }
+            } catch (Exception e) {
+                System.err.println("▶ [totalCount 파싱 실패] 기본값 0으로 대체합니다.");
             }
 
-            // 3. 아이템 리스트 추출 및 변환
-            List<TourDto> tourList = parseTourDtoList(bodyMap);
+            List<TourDto> tourList = parseTourDtoList(response);
 
-            // 💡 4. 정확한 마지막 페이지 계산 공식 적용
-            // (현재 페이지 번호 * 페이지당 개수)가 전체 개수보다 크거나 같으면 마지막 페이지입니다.
-            boolean isLast = (pageNo * PAGE_SIZE) >= totalCount || tourList.size() < PAGE_SIZE;
+            // 💡 [수정] totalCount가 없거나 0일 때를 대비해 가져온 리스트의 크기로 한 번 더 방어
+            boolean isLast = (pageNo * PAGE_SIZE) >= totalCount || tourList.size() < PAGE_SIZE || tourList.isEmpty();
 
             return new TourResponseListDto(tourList, isLast);
 
         } catch (Exception e) {
-            System.err.println("❌ [TourService Error] 지역코드 " + lDongRegnCd + " 처리 중 예외 발생: " + e.getMessage());
+            System.err.println("❌ [TourService Error] 예외 발생: " + e.getMessage());
             e.printStackTrace();
             return new TourResponseListDto(Collections.emptyList(), true);
         }

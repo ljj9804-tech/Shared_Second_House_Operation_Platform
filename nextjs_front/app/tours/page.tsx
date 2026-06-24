@@ -34,6 +34,12 @@ interface TourItem {
   contentid: string;
 }
 
+// 1. 서버 응답용 인터페이스 정의 추가
+interface TourServerResponse {
+  tours: TourItem[];
+  isLast: boolean;
+}
+
 export default function TourListPage() {
   /* ==========================================
    * [2] 상태 관리 변수 (Component States)
@@ -64,20 +70,19 @@ export default function TourListPage() {
       setIsLoading(true);
 
       try {
-        const response = await axios.get<TourItem[]>(
+        const response = await axios.get<TourServerResponse>(
           `http://localhost:8080/api/tours?lDongRegnCd=${region}&pageNo=${page}`,
         );
-        const data = response.data;
+        const { tours, isLast } = response.data;
 
-        // 카테고리 변경 시에는 기존 리스트를 덮어씌우고, 스크롤 시에는 누적 연산
         if (isNewCategory) {
-          setTourList(data);
+          setTourList(tours);
         } else {
-          setTourList((prev) => [...prev, ...data]);
+          setTourList((prev) => [...prev, ...tours]);
         }
 
-        // 백엔드 약속 규격(10개)보다 적게 오면 데이터가 더 없는 것으로 판단
-        setHasMore(data.length === 10);
+        // 💡 [수정] 서버가 알려준 확실한 지표인 isLast의 반대값을 세팅
+        setHasMore(!isLast);
       } catch (error) {
         console.error("관광지 데이터를 불러오는 중 오류 발생:", error);
       } finally {
