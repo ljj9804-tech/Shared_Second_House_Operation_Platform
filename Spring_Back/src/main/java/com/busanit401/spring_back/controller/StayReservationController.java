@@ -24,27 +24,22 @@ public class StayReservationController {
     private final StayReservationService reservationService;
 
     // ── 내 예약 목록 조회 ─────────────────────────────────────
-    // [TODO] 로그인 완전 연동 후: @RequestParam Long userId 제거
-    //        resolvedUserId 라인 제거 → userDetails.getId() 직접 사용
     @GetMapping
     @Operation(summary = "내 예약 목록 조회", description = "로그인한 유저의 예약 목록을 조회합니다.")
     public ResponseEntity<List<StayReservationResponseDto>> getReservations(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam Long userId) {
-        Long resolvedUserId = userDetails != null ? userDetails.getId() : userId;
-        log.info("✅ [StayReservationController] 내 예약 목록 조회 → userId: {}", resolvedUserId);
-        return ResponseEntity.ok(reservationService.getReservations(resolvedUserId));
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("✅ [StayReservationController] 내 예약 목록 조회 → userId: {}", userDetails.getId());
+        return ResponseEntity.ok(reservationService.getReservations(userDetails.getId()));
     }
 
     // ── 예약 생성 ─────────────────────────────────────────────
-    // [TODO] 로그인 완전 연동 후: @AuthenticationPrincipal CustomUserDetails userDetails 파라미터 추가
-    //        requestDto.getUserId() → userDetails.getId() 로 교체
     @PostMapping
     @Operation(summary = "예약 생성", description = "숙소를 예약합니다.")
     public ResponseEntity<StayReservationResponseDto> createReservation(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody StayReservationRequestDto requestDto) {
-        log.info("✅ [StayReservationController] 예약 생성 → userId: {}", requestDto.getUserId());
-        return ResponseEntity.ok(reservationService.createReservation(requestDto.getUserId(), requestDto));
+        log.info("✅ [StayReservationController] 예약 생성 → userId: {}", userDetails.getId());
+        return ResponseEntity.ok(reservationService.createReservation(userDetails.getId(), requestDto));
     }
 
     // ── 숙소별 확정 예약 목록 조회 (달력 비활성 날짜용) ──────
@@ -66,18 +61,14 @@ public class StayReservationController {
     }
 
     // ── 예약 취소 ─────────────────────────────────────────────
-    // [TODO] 로그인 완전 연동 후: @RequestParam Long userId 제거
-    //        resolvedUserId 라인 제거 → userDetails.getId() 직접 사용
     @PatchMapping("/{id}/cancel")
     @Operation(summary = "예약 취소", description = "예약을 취소합니다.")
-    public ResponseEntity<Void> cancelReservation(
+    public ResponseEntity<Boolean> cancelReservation(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam Long userId) {
-        Long resolvedUserId = userDetails != null ? userDetails.getId() : userId;
-        log.info("✅ [StayReservationController] 예약 취소 → reservationId: {}, userId: {}", id, resolvedUserId);
-        reservationService.cancelReservation(id, resolvedUserId);
-        return ResponseEntity.noContent().build();
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("✅ [StayReservationController] 예약 취소 → reservationId: {}, userId: {}", id, userDetails.getId());
+        reservationService.cancelReservation(id, userDetails.getId());
+        return ResponseEntity.ok(true);
     }
 }
 
@@ -103,14 +94,15 @@ public class StayReservationController {
  * - GET    /api/stay/reservations/admin/all              : [관리자] 전체 예약 목록 조회 (userId 파라미터로 필터링 가능)
  * ----------------------------------------------------------------------------------
  * [파일 흐름과 순서]
- * [조회] GET  → getReservations(userId)               → Service → 정렬된 목록 반환
- * [생성] POST → createReservation(requestDto)         → Service → 중복체크 → 저장 → 반환
- * [달력] GET  → getReservationsByAccommodation(id)    → Service → CONFIRMED 목록 반환
- * [취소] PATCH → cancelReservation(id, userId)        → Service → 본인 확인 → CANCELLED
- * [관리자] GET → getAllReservations(userId?)           → Service → 전체 or 유저별 목록 시작일 내림차순 반환
+ * [조회] GET  → getReservations(userDetails)               → Service → 정렬된 목록 반환
+ * [생성] POST → createReservation(userDetails, requestDto) → Service → 중복체크 → 저장 → 반환
+ * [달력] GET  → getReservationsByAccommodation(id)         → Service → CONFIRMED 목록 반환
+ * [취소] PATCH → cancelReservation(id, userDetails)        → Service → 본인 확인 → CANCELLED
+ * [관리자] GET → getAllReservations(userId?)                → Service → 전체 or 유저별 목록 시작일 내림차순 반환
  * ----------------------------------------------------------------------------------
  * [주의사항 / 참고]
- * ⚠️ [TODO] 로그인 완전 연동 전까지 @RequestParam Long userId 로 userId 수동 전달
- *    → 연동 후 userDetails.getId() 로 교체 예정 (getReservations, cancelReservation)
+ * - 모든 userId는 @AuthenticationPrincipal CustomUserDetails.getId() 로 서버에서 획득
+ * - 프론트에서 userId 파라미터 전달 불필요 (SecurityConfig에서 인증 보장)
+ * - cancelReservation은 true(Boolean) 반환 (204 No Content 대신 200 + JSON 으로 fetch 파싱 오류 방지)
  * ==================================================================================
  */

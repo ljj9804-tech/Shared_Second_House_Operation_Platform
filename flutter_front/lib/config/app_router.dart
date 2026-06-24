@@ -5,6 +5,7 @@ import 'package:flutter_front/domain/controller/stay_accommodation_controller.da
 import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
 import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
 import 'package:flutter_front/domain/controller/restaurant_controller.dart';
+import 'package:flutter_front/domain/controller/route_controller.dart';
 import 'package:flutter_front/common/widget/global_chatbot_fab.dart';
 import 'package:flutter_front/features/auth/provider/auth_provider.dart'; // 추가
 import 'package:flutter_front/features/auth/screen/auth_gate.dart';        // 추가
@@ -33,6 +34,7 @@ class AppRouter extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StayReservationController()),
         ChangeNotifierProvider(create: (_) => ChatBotController()),
         ChangeNotifierProvider(create: (_) => RestaurantController()),
+        ChangeNotifierProvider(create: (_) => RouteController()),
       ],
       child: MaterialApp(
         title: '세컨하우스',
