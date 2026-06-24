@@ -54,8 +54,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      tokenStorage.remove();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
     const errorMessage = await parseError(res);
-    console.log("ERROR RESPONSE:", errorMessage);
     throw new Error(errorMessage);
   }
 
