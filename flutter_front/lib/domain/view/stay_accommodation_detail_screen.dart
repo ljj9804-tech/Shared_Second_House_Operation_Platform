@@ -25,7 +25,7 @@
  * └─────────────────┴─────────────────────────────────────────────────────────────┘
  * ----------------------------------------------------------------------------------
  * [주의사항]
- * ⚠️ [TODO] 로그인 연동 후 AppConfig.tempUserId → 실제 userId로 교체
+ * ✅ AuthProvider.userId로 실제 로그인 사용자 연동
  * ==================================================================================
  */
 
@@ -40,6 +40,7 @@ import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/constants/stay_constants.dart';
 import 'package:flutter_front/common/widget/bottom_sheet_selector.dart';
 import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
 import 'package:flutter_front/domain/dto/stay_story_dto.dart';
@@ -72,7 +73,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       if (!mounted) return;
       await context
           .read<StayAccommodationController>()
-          .loadAccommodationDetail(widget.accommodationId, AppConfig.tempUserId);
+          .loadAccommodationDetail(widget.accommodationId, context.read<AuthProvider>().userId!);
       if (!mounted) return;
       final accommodation =
           context.read<StayAccommodationController>().selectedAccommodation;
@@ -149,7 +150,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       expandedHeight: 280,
       pinned: true,
       backgroundColor: AppColors.primary,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: IconThemeData(color: _showTitle ? Colors.white : AppColors.primary),
       title: AnimatedOpacity(
         opacity: _showTitle ? 1.0 : 0.0,
         duration: const Duration(milliseconds: 200),

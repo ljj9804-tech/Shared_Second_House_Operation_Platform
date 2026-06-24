@@ -103,8 +103,10 @@ class StayAccommodationDto {
       latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
       longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
       status: json['status'] ?? 'AVAILABLE',
-      prices: (json['prices'] as List<dynamic>? ?? [])
-          .map((e) => StayAccommodationPriceDto.fromJson(e))
+      prices: (json['prices'] is List
+          ? (json['prices'] as List<dynamic>)
+          : <dynamic>[])
+          .map((e) => StayAccommodationPriceDto.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }

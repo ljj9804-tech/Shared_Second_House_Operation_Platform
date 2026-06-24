@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "sh_cart")
 @Getter
+@Setter // 💡 [수정] 필수: 서비스에서 데이터를 넣기 위해 필요합니다.
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

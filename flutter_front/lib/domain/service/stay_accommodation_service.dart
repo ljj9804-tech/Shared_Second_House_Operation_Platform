@@ -20,15 +20,18 @@
  * ==================================================================================
  */
 
+import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/core/api/dio_client.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
 
 class StayAccommodationService {
-  final Dio _dio = Dio(BaseOptions(baseUrl: AppConfig.baseUrl));
+  Dio get _dio => DioClient.instance.dio;
 
   Future<List<StayAccommodationDto>> getAccommodations() async {
     final response = await _dio.get('/stay/accommodations', queryParameters: {'page': 0, 'size': 100});
+    debugPrint('🔍 서버 실제 응답 데이터 타입: ${response.data.runtimeType}');
+    debugPrint('🔍 서버 실제 응답 데이터 내용: ${response.data}');
     final data = response.data as Map<String, dynamic>;
     return (data['content'] as List).map((e) => StayAccommodationDto.fromJson(e)).toList();
   }
