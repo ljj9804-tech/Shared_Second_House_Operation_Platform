@@ -195,6 +195,32 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  /// 로그아웃 확인 후 처리 — AuthProvider.logout()이 상태를 unauthenticated로 바꾸면
+  /// AuthGate가 자동으로 로그인 화면으로 전환한다(별도 화면 이동 코드 불필요).
+  Future<void> _confirmLogout(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('로그아웃 하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('로그아웃',
+                style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      await context.read<AuthProvider>().logout();
+    }
+  }
+
   /// 하단 탭 선택 — 홈 탭을 누르면 예약을 최신으로 다시 불러온다.
   /// (앱이 켜진 채로 두면 initState가 다시 안 돌아 새로고침이 안 되는 문제 해결)
   void _onTabSelected(int index) {
@@ -262,12 +288,13 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: AppColors.primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications_none, color: Colors.white),
-        //     onPressed: () {},
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: '로그아웃',
+            onPressed: () => _confirmLogout(context),
+          ),
+        ],
       ),
       body: ctrl.isLoadingList
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))

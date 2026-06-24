@@ -50,7 +50,7 @@ public class ProductApiController {
     }
 
     // 2. 장바구니 상품 추가 API
-    @PostMapping("/cart/add")
+    @PostMapping("/products/add")   //"cart/add"
     public ResponseEntity<Map<String, Object>> addToCart(@RequestBody Map<String, Object> request) {
         System.out.println("====== [장바구니 추가 요청 수신] ======");
         System.out.println("상품 ID (productId): " + request.get("productId"));

@@ -29,6 +29,7 @@
 
 import styles from './LocationMap.module.css';
 import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import {
   AdvancedMarker,
   APIProvider,
@@ -80,11 +81,10 @@ export default function LocationMap({
     async function fetchRestaurants() {
       try {
         // 내 DB에 저장된 숙소별 맛집 조회 (구글 호출은 백엔드 /sync에서 별도 수행)
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/places/restaurants?accommodationId=${accommodationId}`
+        // api.get 이 accessToken 을 Authorization: Bearer 로 자동 첨부 (JWT 인증)
+        const data = await api.get<PlaceDto[]>(
+          `/api/places/restaurants?accommodationId=${accommodationId}`
         );
-        if (!res.ok) throw new Error();
-        const data = await res.json();
         setPlaces(data);
       } catch {
         setError('맛집 정보를 가져오지 못했어요. 😢');

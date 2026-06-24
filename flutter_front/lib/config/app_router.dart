@@ -19,6 +19,7 @@ import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart'
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_screen.dart';
+import 'package:flutter_front/domain/view/live_route_map_screen.dart';
 
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
 
@@ -54,6 +55,7 @@ class AppRouter extends StatelessWidget {
           '/signup': (context) => const SignupScreen(),  // 추가
           '/accommodations': (context) => const StayAccommodationListScreen(),
           '/my/reservations': (context) => const StayMyReservationScreen(),
+          '/route': (context) => const LiveRouteMapScreen(),
           '/chat': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
             return GuestChatScreen(
