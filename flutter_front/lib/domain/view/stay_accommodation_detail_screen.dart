@@ -30,6 +30,8 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Factory
+import 'package:flutter/gestures.dart'; // EagerGestureRecognizer (스크롤 뷰 안에서 지도 드래그 허용)
 import 'package:flutter_front/domain/controller/restaurant_controller.dart';
 import 'package:flutter_front/domain/dto/place_dto.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -443,6 +445,13 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
                       myLocationButtonEnabled: false,
                       mapToolbarEnabled: false,
                       onMapCreated: (c) => _mapController = c,
+                      // CustomScrollView 안에 있어 부모가 드래그를 가로채므로,
+                      // 지도가 제스처를 우선 차지하도록 EagerGestureRecognizer 등록
+                      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                        Factory<OneSequenceGestureRecognizer>(
+                          () => EagerGestureRecognizer(),
+                        ),
+                      },
                     ),
                     if (controller.isLoading)
                       Container(

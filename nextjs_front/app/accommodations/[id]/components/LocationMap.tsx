@@ -58,6 +58,9 @@ interface LocationMapProps {
   latitude: number;
   longitude: number;
   address: string;
+  // 부모(상세 페이지)가 /api/users 검증까지 끝낸 "유효 로그인" 여부.
+  // true일 때만 구글맵을 마운트해 과금을 막는다. (검증 중복 방지: 여기선 다시 호출하지 않음)
+  showMap: boolean;
 }
 
 export default function LocationMap({
@@ -65,6 +68,7 @@ export default function LocationMap({
   latitude,
   longitude,
   address,
+  showMap,
 }: LocationMapProps) {
   const [places, setPlaces] = useState<PlaceDto[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceDto | null>(null);
@@ -72,6 +76,7 @@ export default function LocationMap({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!showMap) return; // 검증 통과 전/비회원이면 맛집도 조회하지 않음
     async function fetchRestaurants() {
       try {
         // 내 DB에 저장된 숙소별 맛집 조회 (구글 호출은 백엔드 /sync에서 별도 수행)
@@ -88,7 +93,7 @@ export default function LocationMap({
       }
     }
     fetchRestaurants();
-  }, [accommodationId]);
+  }, [accommodationId, showMap]);
 
   return (
     // <div className={styles.screen}>
@@ -97,6 +102,12 @@ export default function LocationMap({
       <h2 className={styles.sectionTitle}>주변 맛집</h2>
       <p className={styles.address}>{address}</p>
 
+      {!showMap ? (
+        // 비회원/만료·블랙리스트 토큰: 구글맵을 마운트하지 않아 과금이 발생하지 않음
+        <div className={styles.loginNotice}>
+          로그인 후 주변 맛집 지도를 확인할 수 있어요.
+        </div>
+      ) : (
       <div className={styles.mapWrap}>
         {/* 1. API 키 설정 */}
         <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY || ''}>
@@ -204,6 +215,7 @@ export default function LocationMap({
         )}
         {error && !isLoading && <div className={styles.overlay}>{error}</div>}
       </div>
+      )}
       {/* </div> */}
     </section>
   );
