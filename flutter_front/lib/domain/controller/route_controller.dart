@@ -101,10 +101,6 @@ class RouteController extends ChangeNotifier {
       _isTracking = true;
       return true;
     } on DioException catch (e) {
-      // 실제 원인을 콘솔에 남겨 진단 (상태코드/URL/타입/응답)
-      debugPrint('🔴 [추적 시작 실패] status=${e.response?.statusCode}, '
-          'url=${e.requestOptions.uri}, type=${e.type}, '
-          'data=${e.response?.data}, msg=${e.message}');
       final code = e.response?.statusCode;
       if (code == 401 || code == 403) {
         _error = '로그인이 필요해요. 다시 로그인한 뒤 시도해 주세요.';

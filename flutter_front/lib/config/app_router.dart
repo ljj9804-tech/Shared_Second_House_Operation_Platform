@@ -13,7 +13,6 @@ import 'package:flutter_front/features/auth/screen/login_screen.dart';    // 추
 import 'package:flutter_front/features/auth/screen/signup_screen.dart';   // 추가
 
 // [화면 Import]
-import 'package:flutter_front/domain/view/main_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
