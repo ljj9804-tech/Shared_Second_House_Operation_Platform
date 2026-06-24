@@ -1,3 +1,42 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/accommodations/[id]/page.tsx
+ * 역할  : 숙소 상세 페이지 (이미지 슬라이더 + 섹션들 + 우측 고정 계산기)
+ * 사용처 : /accommodations/{id} 진입 시 렌더링
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - ImageSlider.tsx     : 이미지 슬라이더 컴포넌트
+ * - PriceTable.tsx      : 장기 계약 할인 가격표
+ * - LocationMap.tsx     : 주변 맛집 지도
+ * - HouseStructure.tsx  : 집 구조 정보
+ * - AmenityGrid.tsx     : 구성용품 아이콘 그리드
+ * - StorySection.tsx    : 스토리 섹션
+ * - lib/api.ts          : fetch 기반 API 클라이언트 (Bearer 토큰 자동 첨부)
+ * - lib/token.ts        : tokenStorage (localStorage accessToken)
+ * - types/auth.ts       : UserResp 타입 (userId 획득용)
+ * - app/lib/constants.ts : MONTH_OPTIONS
+ * - Spring: StayAccommodationController.java : GET /api/stay/accommodations/{id}  (permitAll)
+ * - Spring: StayStoryController.java         : GET /api/stay/stories/{id}         (permitAll)
+ * - Spring: SubscriptionsController.java     : GET /api/subscriptions/my/{userId} (인증 필요)
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소 상세 + 스토리 + 구독 상태 병렬 API 조회 (Promise.all)
+ * - 구독 상태(none/waiting/active/expired) 별 버튼 분기
+ * - 우측 사이드바: 팀수·개월수 선택 → 팀당 월세 실시간 계산
+ * - calcTeamPrice() 함수 export → AccommodationCard, SubscribePage에서 import
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입 → tokenStorage 확인
+ *   [비로그인] → 숙소+스토리만 조회 → subscriptionStatus='none' (구독하러가기 버튼)
+ *   [로그인]   → 숙소+스토리+userId 병렬 조회 → subscriptions 조회 → 상태 분기
+ * → 팀수/개월수 변경 → calcTeamPrice() → 팀당 월세 표시
+ * ----------------------------------------------------------------------------------
+ * [주의사항 / 참고]
+ * - lib/api.ts는 401 시 리프레시 시도 후 /login 리다이렉트 → 비로그인 판별은 tokenStorage로
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -5,13 +44,16 @@ import { useParams, useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import { StayAccommodationDto, StayAccommodationPriceDto } from '../page';
 
+import { api } from '@/lib/api';
+import { tokenStorage } from '@/lib/token';
+import { UserResp } from '@/types/auth';
+import { MONTH_OPTIONS } from '@/app/lib/constants';
 import ImageSlider from './components/ImageSlider';
 import PriceTable from './components/PriceTable';
-import LocationMap from './components/LocationMap';
 import HouseStructure from './components/HouseStructure';
 import AmenityGrid from './components/AmenityGrid';
-import WelcomeKit from './components/WelcomeKit';
 import StorySection from './components/StorySection';
+import LocationMap from './components/LocationMap';
 
 // 스토리 타입
 export interface StayStoryDto {
@@ -24,6 +66,11 @@ export interface StayStoryDto {
 
 // 구독 상태 타입
 type SubscriptionStatus = 'none' | 'waiting' | 'active' | 'expired';
+
+interface SubscriptionItemDto {
+  accommodationId: number;
+  status: string;
+}
 
 // 팀당 월세 계산 함수
 export function calcTeamPrice(
@@ -56,61 +103,58 @@ export default function AccommodationDetailPage() {
   const [teams, setTeams] = useState(1);
   const [months, setMonths] = useState(1);
 
-  // TODO [인증]: userId 하드코딩 → JWT 토큰에서 실제 userId 추출로 교체
-  const userId = 1;
-
   useEffect(() => {
     if (!id) return;
 
-    // 병렬 API 호출
-    Promise.all([
-      fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations/${id}`
-      ).then((r) => r.json()),
-      fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/stories/${id}`).then(
-        (r) => r.json()
-      ),
-      fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/subscriptions/my/${userId}`
-      ).then((r) => r.json()),
-    ])
-      .then(([accommodationData, storiesData, subscriptionData]) => {
-        console.log('숙소 데이터:', accommodationData);
-        console.log('스토리 데이터:', storiesData);
-        console.log('구독 데이터:', subscriptionData);
+    const token = tokenStorage.get();
 
-        setAccommodation(accommodationData);
-        setStories(storiesData);
+    if (token) {
+      // 로그인 상태: 숙소 + 스토리 + userId 병렬 조회 후 구독 상태 확인
+      Promise.all([
+        api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
+        api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
+        api.get<UserResp>('/api/users'),
+      ])
+        .then(([accommodationData, storiesData, userData]) => {
+          setAccommodation(accommodationData);
+          setStories(storiesData);
+          return api.get<SubscriptionItemDto[]>(
+            `/api/subscriptions/my/${userData.userId}`
+          );
+        })
+        .then((subscriptionData) => {
+          const matched = Array.isArray(subscriptionData)
+            ? subscriptionData.find((s) => s.accommodationId === Number(id))
+            : null;
 
-        // 구독 상태 파싱
-        // TODO [인증]: 실제 구독 API 응답 구조에 맞게 수정
-        if (
-          !subscriptionData ||
-          !Array.isArray(subscriptionData) ||
-          subscriptionData.length === 0
-        ) {
-          setSubscriptionStatus('none');
-        } else {
-          const latest = subscriptionData[0];
-          if (latest.status === 'PENDING') {
+          if (!matched) setSubscriptionStatus('none');
+          else if (matched.status === 'PENDING')
             setSubscriptionStatus('waiting');
-          } else if (latest.status === 'ACTIVE') {
-            setSubscriptionStatus('active');
-          } else if (latest.status === 'EXPIRED') {
+          else if (matched.status === 'ACTIVE') setSubscriptionStatus('active');
+          else if (matched.status === 'EXPIRED')
             setSubscriptionStatus('expired');
-          } else if (latest.status === 'CANCELLED') {
-            setSubscriptionStatus('none');
-          } else {
-            setSubscriptionStatus('none');
-          }
-        }
-      })
-      .catch((err) => {
-        console.log('상세 페이지 데이터 조회 실패:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+          else setSubscriptionStatus('none');
+        })
+        .catch((err) => {
+          console.log('상세 페이지 데이터 조회 실패:', err);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      // 비로그인 상태: 공개 데이터만 조회 (구독 상태는 none)
+      Promise.all([
+        api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
+        api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
+      ])
+        .then(([accommodationData, storiesData]) => {
+          setAccommodation(accommodationData);
+          setStories(storiesData);
+          setSubscriptionStatus('none');
+        })
+        .catch((err) => {
+          console.log('상세 페이지 데이터 조회 실패:', err);
+        })
+        .finally(() => setLoading(false));
+    }
   }, [id]);
 
   if (loading) return <div className={styles.loading}>불러오는 중...</div>;
@@ -148,9 +192,10 @@ export default function AccommodationDetailPage() {
 
           {/* 섹션2: 위치 및 주변 시설 */}
           <LocationMap
-            address={accommodation.address}
+            accommodationId={accommodation.id}
             latitude={accommodation.latitude}
             longitude={accommodation.longitude}
+            address={accommodation.address}
           />
 
           {/* 섹션3: 집 구조 */}
@@ -171,13 +216,14 @@ export default function AccommodationDetailPage() {
 
           {/* 섹션6: 스토리 */}
           <StorySection stories={stories} />
-
         </div>
 
         {/* 우측 고정 계산기 */}
         <aside className={styles.sidebar}>
           <div className={styles.sidebarInner}>
-            <h2 className={styles.sidebarTitle}>{accommodation.name}</h2>
+            <h2 className={styles.sidebarTitle}>
+              월세 자동 계산기{/* {accommodation.name} */}
+            </h2>
 
             {/* 팀수 선택 */}
             <div className={styles.selectGroup}>
@@ -203,9 +249,9 @@ export default function AccommodationDetailPage() {
                 value={months}
                 onChange={(e) => setMonths(Number(e.target.value))}
               >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>
-                    {n} 개월
+                {MONTH_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>

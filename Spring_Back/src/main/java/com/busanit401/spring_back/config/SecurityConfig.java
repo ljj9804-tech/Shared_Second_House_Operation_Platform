@@ -3,6 +3,8 @@ package com.busanit401.spring_back.config;
 import com.busanit401.spring_back.security.auth.JwtAuthenticationFilter;
 import com.busanit401.spring_back.security.auth.JwtFilter;
 import com.busanit401.spring_back.domain.service.TokenBlacklistService;
+import com.busanit401.spring_back.security.oauth.CustomOAuth2AuthenticationSuccessHandler;
+import com.busanit401.spring_back.security.oauth.CustomOAuth2UserService;
 import com.busanit401.spring_back.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -40,7 +43,8 @@ public class SecurityConfig {
     private final JwtFilter jwtFilter;
     private final TokenBlacklistService tokenBlacklistService;
     private final JwtUtil jwtUtil;
-
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOAuth2AuthenticationSuccessHandler customOAuth2AuthenticationSuccessHandler;
     @Bean
     public BCryptPasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
@@ -79,6 +83,9 @@ public class SecurityConfig {
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(authenticationManager, tokenBlacklistService, jwtUtil);
 
         http.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
@@ -89,6 +96,10 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
+                                // 게스트 채팅 테스트
+                                "/ws-test.html",
+                                "/ws-guest-chat/**",
+                                "/api/guest/chat/**",
 
                                 "/oauth2/**",
                                 "/login/**",
@@ -113,8 +124,12 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth
-                        .defaultSuccessUrl("/", true)
-                );;
+                                .userInfoEndpoint(userInfo -> userInfo
+                                        .userService(customOAuth2UserService)
+                                )
+                                .successHandler(customOAuth2AuthenticationSuccessHandler)
+                        // defaultSuccessUrl 제거 — successHandler가 리다이렉트 담당
+                );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

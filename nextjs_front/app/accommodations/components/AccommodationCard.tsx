@@ -1,3 +1,27 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/accommodations/components/AccommodationCard.tsx
+ * 역할  : 숙소 목록의 개별 카드 컴포넌트 (이미지, 이름, 가격, 주소 표시)
+ * 사용처 : app/accommodations/page.tsx
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - AccommodationCard.module.css  : 카드 스타일
+ * - app/accommodations/page.tsx   : 부모 컴포넌트 (teams, months props 전달)
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 숙소 대표 이미지 표시 (없으면 "이미지 없음" 플레이스홀더)
+ * - 점검 중(MAINTENANCE) 상태 배지 표시
+ * - 가격 계산기 설정(팀수, 개월수) 기반 팀당 월세 계산 및 표시
+ * - 카드 클릭 시 숙소 상세 페이지로 이동
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 부모에서 accommodation, teams, months props 수신
+ * → calcTeamPrice() 로 팀당 월세 계산
+ * → 카드 UI 렌더링 → 클릭 시 /accommodations/{id} 이동
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -77,11 +101,14 @@ export default function AccommodationCard({
         <div className={styles.priceWrap}>
           {teamPrice > 0 ? (
             <>
-              <span className={styles.priceLabel}>팀당 월세</span>
-              <span className={styles.price}>
-                {teamPrice.toLocaleString()}원
-              </span>
-              <span className={styles.priceUnit}>/ 개월</span>
+              <p className={styles.priceBase}>
+                월 {accommodation.monthlyPrice.toLocaleString()}원
+              </p>
+              <p className={styles.priceTeam}>
+                팀당 월세&nbsp;
+                <span className={styles.price}>{teamPrice.toLocaleString()}원</span>
+                <span className={styles.priceUnit}>&nbsp;/ {months}개월 기준</span>
+              </p>
             </>
           ) : (
             <span className={styles.priceEmpty}>가격 정보 없음</span>
