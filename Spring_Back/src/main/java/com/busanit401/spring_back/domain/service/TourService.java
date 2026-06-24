@@ -1,6 +1,7 @@
 package com.busanit401.spring_back.domain.service;
 
 import com.busanit401.spring_back.dto.TourDto;
+import com.busanit401.spring_back.dto.TourResponseListDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,12 @@ public class TourService {
     @Value("${tour.api.service-key}")
     private String serviceKey;
 
+    private final int PAGE_SIZE = 10; // 페이지당 노출 개수 고정
+
     // 포스트맨 규격에 맞춰 특정 지역의 카테고리별 관광지 목록을 10개씩 조회하는 비즈니스 메서드
     // @param lDongRegnCd 법정동 시도 코드 (예: 인천=28, 서울=11 등)
     // @param pageNo 요청할 페이지 번호
-    public List<TourDto> getTourListByRegion(String lDongRegnCd, int pageNo) {
+    public TourResponseListDto getTourListByRegion(String lDongRegnCd, int pageNo) {
         try {
             // 1. UriComponentsBuilder로 코드 직관화 및 가독성 극대화 (Double Encoding 방지 자동 지원)
             URI targetUri = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/areaBasedList2")
@@ -50,17 +53,35 @@ public class TourService {
 
             System.out.println("▶ [API Request URI] : " + targetUri);
 
-            // 2. 외부 API 호출
             Map<String, Object> response = restTemplate.getForObject(targetUri, Map.class);
+            if (response == null) return new TourResponseListDto(Collections.emptyList(), true);
 
-            // 3. 응답 결과 반환
-            return parseTourDtoList(response);
+            // 1. 공공데이터 응답 파싱 및 totalCount 추출용 구조 진입
+            Map<String, Object> resMap = (Map<String, Object>) response.get("response");
+            if (resMap == null) return new TourResponseListDto(Collections.emptyList(), true);
+
+            Map<String, Object> bodyMap = (Map<String, Object>) resMap.get("body");
+            if (bodyMap == null) return new TourResponseListDto(Collections.emptyList(), true);
+
+            // 💡 2. 외부 API가 준 전체 데이터 개수 확인 (isLast 판별용 변수)
+            int totalCount = 0;
+            if (bodyMap.get("totalCount") != null) {
+                totalCount = Integer.parseInt(String.valueOf(bodyMap.get("totalCount")));
+            }
+
+            // 3. 아이템 리스트 추출 및 변환
+            List<TourDto> tourList = parseTourDtoList(bodyMap);
+
+            // 💡 4. 정확한 마지막 페이지 계산 공식 적용
+            // (현재 페이지 번호 * 페이지당 개수)가 전체 개수보다 크거나 같으면 마지막 페이지입니다.
+            boolean isLast = (pageNo * PAGE_SIZE) >= totalCount || tourList.size() < PAGE_SIZE;
+
+            return new TourResponseListDto(tourList, isLast);
 
         } catch (Exception e) {
-            // 💡 500 에러 추적을 위한 로깅 후 빈 리스트 반환
             System.err.println("❌ [TourService Error] 지역코드 " + lDongRegnCd + " 처리 중 예외 발생: " + e.getMessage());
             e.printStackTrace();
-            return Collections.emptyList();
+            return new TourResponseListDto(Collections.emptyList(), true);
         }
     }
 

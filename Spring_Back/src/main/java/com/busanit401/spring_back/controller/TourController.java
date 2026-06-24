@@ -2,6 +2,7 @@ package com.busanit401.spring_back.controller;
 
 import com.busanit401.spring_back.domain.service.TourService;
 import com.busanit401.spring_back.dto.TourDto;
+import io.jsonwebtoken.lang.Collections;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController // JSON 형태로 데이터를 반환하는 REST API 컨트롤러 선언
 @RequestMapping("/api/tours") // 이 컨트롤러의 모든 API 기본 주소 경로 설정
@@ -20,20 +24,41 @@ public class TourController {
 
     private final TourService tourService;
 
-    @GetMapping
-    @Operation(summary = "지역별 카테고리 맞춤 관광지 리스트 10개씩 조회")
-    public ResponseEntity<List<TourDto>> getToursByRegion(
-            @Parameter(description = "법정동 시도 코드 (부산: 26, 인천: 28 등)", required = true)
-            @RequestParam("lDongRegnCd") String lDongRegnCd,
+    // 파싱 편의를 위해 매개변수를 bodyMap으로 변경
+    @SuppressWarnings("unchecked")
+    private List<TourDto> parseTourDtoList(Map<String, Object> bodyMap) {
+        try {
+            if (bodyMap.get("items") == null || "".equals(bodyMap.get("items"))) {
+                return Collections.emptyList();
+            }
 
-            @Parameter(description = "요청할 페이지 번호 (기본값: 1)")
-            @RequestParam(value = "pageNo", required = false, defaultValue = "1") int pageNo) {
+            Map<String, Object> itemsMap = (Map<String, Object>) bodyMap.get("items");
+            Object itemObject = itemsMap.get("item");
+            if (itemObject == null) return Collections.emptyList();
 
-        // 새로 변경된 서비스 레이어 호출 (지역 코드와 페이지 번호 매개변수 전달)
-        List<TourDto> tourList = tourService.getTourListByRegion(lDongRegnCd, pageNo);
+            List<Map<String, Object>> itemList = new ArrayList<>();
 
-        // 프론트엔드에게 표준 HTTP 응답(200 OK)과 함께 리스트 전달
-        return ResponseEntity.ok(tourList);
+            if (itemObject instanceof List) {
+                itemList = (List<Map<String, Object>>) itemObject;
+            } else if (itemObject instanceof Map) {
+                itemList.add((Map<String, Object>) itemObject);
+            }
+
+            return itemList.stream()
+                    .map(item -> new TourDto(
+                            item.get("title") != null ? String.valueOf(item.get("title")) : "정보 없음",
+                            item.get("firstimage") != null ? String.valueOf(item.get("firstimage")) : "",
+                            item.get("addr1") != null ? String.valueOf(item.get("addr1")) : "주소 정보 없음",
+                            item.get("contentid") != null ? String.valueOf(item.get("contentid")) : ""
+                            // 💡 외부 아이템에는 isLast가 없으므로 여기서 매핑하지 않음
+                    ))
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            System.err.println("▶ [JSON 파싱 중 에러 발생] 사유: " + e.getMessage());
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
     }
 }
 

@@ -55,7 +55,9 @@ export default function TourListPage() {
    * ========================================== */
   const fetchTourData = useCallback(
     async (region: string, page: number, isNewCategory = false) => {
-      // API 중복 호출 원천 차단
+      // 더이상 가져올 데이터가 없거나, 이미 로딩 중이면 요청 중단
+      if (!isNewCategory && !hasMore) return;
+      // api 요청 중복 방지: isLoadingRef를 통해 상태를 확인하고, 동시에 여러 요청이 발생하지 않도록 제어
       if (isLoadingRef.current) return;
 
       isLoadingRef.current = true;
@@ -83,7 +85,7 @@ export default function TourListPage() {
         setIsLoading(false);
       }
     },
-    [],
+    [hasMore], // 의존성 배열에 hasMore 추가: hasMore 상태가 변경될 때마다 fetchTourData 함수가 최신 상태를 반영하도록 함
   );
 
   /* ==========================================
@@ -105,6 +107,7 @@ export default function TourListPage() {
    * ========================================== */
   // 무한 스크롤 감지 (Intersection Observer) 설정
   useEffect(() => {
+    // 더 가져올 데이터가 없거나 로딩 중이면 관찰을 시작하지 않음
     if (!observerTarget.current || !hasMore || isLoading) return;
 
     const observer = new IntersectionObserver(
@@ -112,11 +115,10 @@ export default function TourListPage() {
         const { isIntersecting } = entries[0];
 
         if (isIntersecting && !isLoadingRef.current && hasMore) {
-          // 💡 0페이지에서 시작하므로 다음 페이지는 1페이지가 됨
           const nextPage = pageNo + 1;
 
           setPageNo(nextPage);
-          // 💡 최초 진입(nextPage가 1일 때)에는 기존 데이터를 덮어쓰도록(true) 설정
+          // 최초 진입(nextPage가 1일 때)에는 기존 데이터를 덮어쓰도록(true) 설정
           fetchTourData(selectedRegion, nextPage, nextPage === 1);
         }
       },
