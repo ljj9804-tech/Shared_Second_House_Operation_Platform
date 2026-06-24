@@ -22,7 +22,7 @@
  * ② 우리가 머물 집 섹션 — 전체 숙소 가로 슬라이드 (최대 5개)
  * ----------------------------------------------------------------------------------
  * [주의사항]
- * ⚠️ [TODO] 로그인 연동 후 AppConfig.tempUserId → 실제 userId로 교체
+ * ✅ AuthProvider.userId로 실제 로그인 사용자 연동
  * ⚠️ DevScreenLinks 위젯은 개발 완료 후 삭제 예정
  * ==================================================================================
  */
@@ -31,7 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 import 'package:flutter_front/common/constants/app_colors.dart';
-import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
 import 'package:flutter_front/domain/controller/route_controller.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
@@ -61,9 +61,10 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StayAccommodationController>().loadAccommodationsAndFaqs(userId: AppConfig.tempUserId);
+      final userId = context.read<AuthProvider>().userId!;
+      context.read<StayAccommodationController>().loadAccommodationsAndFaqs(userId: userId);
       // 이동경로 버튼 활성화 판단(예약 기간)을 위해 내 예약도 로드
-      context.read<StayReservationController>().loadMyReservations();
+      context.read<StayReservationController>().loadMyReservations(userId);
       // 로그인 직후에만 새로 생성되는 화면이므로, 여기서 챗봇 대화를 초기화해
       // 이전 사용자(로그아웃 전)의 대화가 남지 않게 한다.
       context.read<ChatBotController>().clear();
@@ -117,7 +118,7 @@ class _MainScreenState extends State<MainScreen> {
     final navigator = Navigator.of(context);
 
     // 캐시가 아닌 최신 예약 상태로 다시 조회 (다른 화면/웹에서 취소됐을 수 있음)
-    await resCtrl.loadMyReservations();
+    await resCtrl.loadMyReservations(context.read<AuthProvider>().userId!);
     if (!mounted) return;
 
     if (_activeReservations(resCtrl).isEmpty) {
@@ -199,7 +200,7 @@ class _MainScreenState extends State<MainScreen> {
   void _onTabSelected(int index) {
     setState(() => _currentIndex = index);
     if (index == 0) {
-      context.read<StayReservationController>().loadMyReservations();
+      context.read<StayReservationController>().loadMyReservations(context.read<AuthProvider>().userId!);
     }
   }
 

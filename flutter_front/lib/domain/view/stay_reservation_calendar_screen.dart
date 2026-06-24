@@ -23,6 +23,7 @@ import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/widget/app_base_layout.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
 
 class StayReservationCalendarScreen extends StatefulWidget {
@@ -290,7 +291,7 @@ class _StayReservationCalendarScreenState extends State<StayReservationCalendarS
 
   Future<void> _handleReservation(StayReservationController ctrl) async {
     ctrl.selectDateRange(_rangeStart!, _rangeEnd!);
-    final success = await ctrl.createReservation(widget.accommodationId);
+    final success = await ctrl.createReservation(widget.accommodationId, context.read<AuthProvider>().userId!);
 
     if (!mounted) return;
     if (success) {

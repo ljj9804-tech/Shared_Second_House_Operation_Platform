@@ -27,7 +27,6 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_front/config/app_config.dart';
 import 'package:flutter_front/domain/dto/stay_reservation_dto.dart';
 import 'package:flutter_front/domain/service/stay_reservation_service.dart';
 
@@ -42,13 +41,13 @@ class StayReservationController extends ChangeNotifier {
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
 
-  Future<void> loadMyReservations() async {
+  Future<void> loadMyReservations(int userId) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
     try {
-      reservations = await _service.getMyReservations(AppConfig.tempUserId);
+      reservations = await _service.getMyReservations(userId);
     } catch (e) {
       errorMessage = '예약 목록을 불러오지 못했습니다.';
       debugPrint('❌ [예약 컨트롤러] $e');
@@ -67,7 +66,7 @@ class StayReservationController extends ChangeNotifier {
     }
   }
 
-  Future<bool> createReservation(int accommodationId) async {
+  Future<bool> createReservation(int accommodationId, int userId) async {
     if (selectedStartDate == null || selectedEndDate == null) return false;
 
     isLoading = true;
@@ -76,7 +75,7 @@ class StayReservationController extends ChangeNotifier {
     try {
       final req = StayReservationRequestDto(
         accommodationId: accommodationId,
-        userId: AppConfig.tempUserId,
+        userId: userId,
         startDate: _formatDate(selectedStartDate!),
         endDate: _formatDate(selectedEndDate!),
       );
@@ -96,9 +95,9 @@ class StayReservationController extends ChangeNotifier {
     }
   }
 
-  Future<bool> cancelReservation(int id) async {
+  Future<bool> cancelReservation(int id, int userId) async {
     try {
-      await _service.cancelReservation(id, AppConfig.tempUserId);
+      await _service.cancelReservation(id, userId);
       final idx = reservations.indexWhere((r) => r.id == id);
       if (idx != -1) {
         reservations[idx] = StayReservationDto(
