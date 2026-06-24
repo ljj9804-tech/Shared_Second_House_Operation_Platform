@@ -37,23 +37,23 @@
  * ==================================================================================
  */
 
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import styles from './page.module.css';
-import { StayAccommodationDto, StayAccommodationPriceDto } from '../page';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import styles from "./page.module.css";
+import { StayAccommodationDto, StayAccommodationPriceDto } from "../page";
 
-import { api } from '@/lib/api';
-import { tokenStorage } from '@/lib/token';
-import { UserResp } from '@/types/auth';
-import { MONTH_OPTIONS } from '@/app/lib/constants';
-import ImageSlider from './components/ImageSlider';
-import PriceTable from './components/PriceTable';
-import HouseStructure from './components/HouseStructure';
-import AmenityGrid from './components/AmenityGrid';
-import StorySection from './components/StorySection';
-import LocationMap from './components/LocationMap';
+import { api } from "@/lib/api";
+import { tokenStorage } from "@/lib/token";
+import { UserResp } from "@/types/auth";
+import { MONTH_OPTIONS } from "@/app/lib/constants";
+import ImageSlider from "./components/ImageSlider";
+import PriceTable from "./components/PriceTable";
+import HouseStructure from "./components/HouseStructure";
+import AmenityGrid from "./components/AmenityGrid";
+import StorySection from "./components/StorySection";
+import LocationMap from "./components/LocationMap";
 
 // 스토리 타입
 export interface StayStoryDto {
@@ -65,7 +65,7 @@ export interface StayStoryDto {
 }
 
 // 구독 상태 타입
-type SubscriptionStatus = 'none' | 'waiting' | 'active' | 'expired';
+type SubscriptionStatus = "none" | "waiting" | "active" | "expired";
 
 interface SubscriptionItemDto {
   accommodationId: number;
@@ -77,11 +77,11 @@ export function calcTeamPrice(
   monthlyPrice: number,
   prices: StayAccommodationPriceDto[],
   months: number,
-  teams: number
+  teams: number,
 ): number {
   const priceInfo = prices.find(
     (p) =>
-      months >= p.minMonths && (p.maxMonths === null || months < p.maxMonths)
+      months >= p.minMonths && (p.maxMonths === null || months < p.maxMonths),
   );
   if (!priceInfo) return 0;
   return Math.floor((monthlyPrice * (1 - priceInfo.discountRate)) / teams);
@@ -96,8 +96,10 @@ export default function AccommodationDetailPage() {
     useState<StayAccommodationDto | null>(null);
   const [stories, setStories] = useState<StayStoryDto[]>([]);
   const [subscriptionStatus, setSubscriptionStatus] =
-    useState<SubscriptionStatus>('none');
+    useState<SubscriptionStatus>("none");
   const [loading, setLoading] = useState(true);
+  // 서버가 인정한 유효 로그인 여부 (/api/users 성공 시 true) — LocationMap 지도 노출/과금 게이트
+  const [authed, setAuthed] = useState(false);
 
   // 계산기 상태
   const [teams, setTeams] = useState(1);
@@ -113,13 +115,14 @@ export default function AccommodationDetailPage() {
       Promise.all([
         api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
         api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
-        api.get<UserResp>('/api/users'),
+        api.get<UserResp>("/api/users"),
       ])
         .then(([accommodationData, storiesData, userData]) => {
           setAccommodation(accommodationData);
           setStories(storiesData);
+          setAuthed(true);
           return api.get<SubscriptionItemDto[]>(
-            `/api/subscriptions/my/${userData.userId}`
+            `/api/subscriptions/my/${userData.userId}`,
           );
         })
         .then((subscriptionData) => {
@@ -127,16 +130,16 @@ export default function AccommodationDetailPage() {
             ? subscriptionData.find((s) => s.accommodationId === Number(id))
             : null;
 
-          if (!matched) setSubscriptionStatus('none');
-          else if (matched.status === 'PENDING')
-            setSubscriptionStatus('waiting');
-          else if (matched.status === 'ACTIVE') setSubscriptionStatus('active');
-          else if (matched.status === 'EXPIRED')
-            setSubscriptionStatus('expired');
-          else setSubscriptionStatus('none');
+          if (!matched) setSubscriptionStatus("none");
+          else if (matched.status === "PENDING")
+            setSubscriptionStatus("waiting");
+          else if (matched.status === "ACTIVE") setSubscriptionStatus("active");
+          else if (matched.status === "EXPIRED")
+            setSubscriptionStatus("expired");
+          else setSubscriptionStatus("none");
         })
         .catch((err) => {
-          console.log('상세 페이지 데이터 조회 실패:', err);
+          console.log("상세 페이지 데이터 조회 실패:", err);
         })
         .finally(() => setLoading(false));
     } else {
@@ -148,10 +151,10 @@ export default function AccommodationDetailPage() {
         .then(([accommodationData, storiesData]) => {
           setAccommodation(accommodationData);
           setStories(storiesData);
-          setSubscriptionStatus('none');
+          setSubscriptionStatus("none");
         })
         .catch((err) => {
-          console.log('상세 페이지 데이터 조회 실패:', err);
+          console.log("상세 페이지 데이터 조회 실패:", err);
         })
         .finally(() => setLoading(false));
     }
@@ -166,7 +169,7 @@ export default function AccommodationDetailPage() {
     accommodation.monthlyPrice,
     accommodation.prices ?? [],
     months,
-    teams
+    teams,
   );
 
   return (
@@ -196,6 +199,7 @@ export default function AccommodationDetailPage() {
             latitude={accommodation.latitude}
             longitude={accommodation.longitude}
             address={accommodation.address}
+            showMap={authed}
           />
 
           {/* 섹션3: 집 구조 */}
@@ -261,13 +265,13 @@ export default function AccommodationDetailPage() {
             <div className={styles.priceWrap}>
               <span className={styles.priceLabel}>팀당 월세</span>
               <span className={styles.price}>
-                {teamPrice > 0 ? `${teamPrice.toLocaleString()}원` : '-'}
+                {teamPrice > 0 ? `${teamPrice.toLocaleString()}원` : "-"}
               </span>
               <span className={styles.priceUnit}>/ 개월</span>
             </div>
 
             {/* 버튼 분기 */}
-            {subscriptionStatus === 'none' && (
+            {subscriptionStatus === "none" && (
               <button
                 className="btn-primary"
                 onClick={() => router.push(`/subscribe/${id}`)}
@@ -275,12 +279,12 @@ export default function AccommodationDetailPage() {
                 구독하러가기
               </button>
             )}
-            {subscriptionStatus === 'waiting' && (
+            {subscriptionStatus === "waiting" && (
               <button className="btn-disabled" disabled>
                 승인 대기 중
               </button>
             )}
-            {subscriptionStatus === 'active' && (
+            {subscriptionStatus === "active" && (
               <button
                 className="btn-primary"
                 onClick={() => router.push(`/reservations/${id}`)}
@@ -288,7 +292,7 @@ export default function AccommodationDetailPage() {
                 예약하기
               </button>
             )}
-            {subscriptionStatus === 'expired' && (
+            {subscriptionStatus === "expired" && (
               <button
                 className="btn-primary"
                 onClick={() => router.push(`/subscribe/${id}`)}
