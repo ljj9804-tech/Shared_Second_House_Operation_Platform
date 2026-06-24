@@ -19,48 +19,27 @@
  * ==================================================================================
  */
 
-'use client';
-
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import styles from './Navbar.module.css';
-import { tokenStorage } from '@/lib/token';
-import { api } from '@/lib/api';
-import { UserResp } from '@/types/auth';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import styles from "./Navbar.module.css";
+import { TEMP_USER_ID } from "@/app/lib/auth";
+import { api } from "@/lib/api";
+import { UserResp } from "@/types/auth";
 
 export default function Navbar() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<UserResp | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const token = tokenStorage.get();
-    if (!token) {
-      setUser(null);
-      setAuthLoading(false);
-      return;
-    }
-
     api
-      .get<UserResp>('/api/users')
-      .then((data) => {
-        console.log('[Navbar] 로그인 유저:', data);
-        setUser(data);
+      .get<UserResp>("/api/users")
+      .then((user) => {
+        setIsAdmin(user.role === "ADMIN");
       })
       .catch(() => {
-        // 토큰 만료 등 → lib/api.ts가 자동으로 /login 리다이렉트 처리
-        setUser(null);
-      })
-      .finally(() => setAuthLoading(false));
-  }, [pathname]);
-
-  const handleLogout = () => {
-    tokenStorage.remove();
-    setUser(null);
-    router.push('/');
-  };
+        // 비로그인 상태 등 - admin 아님으로 처리, Navbar는 정상 노출
+        setIsAdmin(false);
+      });
+  }, []);
 
   return (
     <header className={styles.header}>
@@ -75,9 +54,11 @@ export default function Navbar() {
           <Link href="/accommodations" className={styles.navItem}>
             숙소 목록
           </Link>
-          <Link href="/my/reservations" className={styles.navItem}>
-            내 예약
-          </Link>
+          {isAdmin && (
+            <Link href="/accommodations" className={styles.navItem}>
+              숙소 등록
+            </Link>
+          )}
           <Link href="/mypage" className={styles.navItem}>
             마이페이지
           </Link>

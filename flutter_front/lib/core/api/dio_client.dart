@@ -7,16 +7,14 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import '../storage/secure_storage.dart';
 import 'api_constants.dart';
-import '../../config/app_config.dart'; // TODO: 실제 AppConfig 파일 경로로 수정
-
-
+import '../../config/app_config.dart'; // 실제 경로에 맞춰져 있음
 
 class DioClient {
   DioClient._();
   static final DioClient instance = DioClient._();
 
   late final Dio dio = Dio(BaseOptions(
-    baseUrl: AppConfig.baseUrl, // ApiConstants.baseUrl → AppConfig.baseUrl
+    baseUrl: AppConfig.baseUrl,
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
     headers: {'Content-Type': 'application/json'},
@@ -77,7 +75,6 @@ class DioClient {
 
     _isRefreshing = true;
     try {
-      // refresh_token은 쿠키잡이 자동으로 헤더에 실어줌 (요청 바디 없음)
       final response = await dio.post(ApiConstants.refreshToken);
       final body = response.data is String
           ? jsonDecode(response.data as String)
