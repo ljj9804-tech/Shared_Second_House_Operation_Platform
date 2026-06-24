@@ -52,8 +52,19 @@ export default function Navbar() {
         setUser(data);
       })
       .catch(() => {
+seonggyu
         // 토큰 만료 등 → lib/api.ts가 자동으로 /login 리다이렉트 처리
         setUser(null);
+      })
+      .finally(() => setAuthLoading(false));
+  }, [pathname]);
+
+  const handleLogout = () => {
+    tokenStorage.remove();
+    setUser(null);
+    router.push('/');
+  };
+const isAdmin = true;
         setIsAdmin(false);
       })
       .finally(() => setAuthLoading(false));
@@ -65,6 +76,7 @@ export default function Navbar() {
     router.push("/");
   };
 
+middle
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
@@ -78,15 +90,35 @@ export default function Navbar() {
           <Link href="/accommodations" className={styles.navItem}>
             숙소 목록
           </Link>
+seonggyu
+          <Link href="/my/reservations" className={styles.navItem}>
+            내 예약
+          </Link>
+          <Link href="/product" className={styles.navItem}>
+          상품 스토어
+        </Link>
+        <Link href="/cart" className={styles.navItem}>
+          장바구니
+        </Link>
+        <Link href="/mypage" className={styles.navItem}>
+=======
           {isAdmin && (
             <Link href="/accommodations" className={styles.navItem}>
               숙소 등록
             </Link>
           )}
           <Link href="/mypage" className={styles.navItem}>
+ middle
             마이페이지
           </Link>
-
+          
+        {/* 👑 관리자 계정일 때만 배달 관리 콘솔 메뉴가 보임 */}
+        {isAdmin && (
+          <Link href="/delivery" className={styles.navItem} style={{ color: 'orange', fontWeight: 'bold' }}>
+            배달 관리 ★
+          </Link>
+        )}
+        
           {authLoading ? null : user ? (
             <>
               <span className={styles.navItem}>
