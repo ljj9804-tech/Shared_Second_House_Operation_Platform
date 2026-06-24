@@ -7,12 +7,14 @@
  * ----------------------------------------------------------------------------------
  * [연관 파일]
  * - app/accommodations/[id]/page.tsx         : calcTeamPrice import 출처
- * - Spring: StayAccommodationController.java : GET /api/stay/accommodations/{id}
- * - Spring: SubscriptionsController.java     : POST /api/waiting/apply/{leaderId}
+ * - lib/api.ts                               : fetch 기반 API 클라이언트 (Bearer 토큰 자동 첨부)
+ * - types/auth.ts                            : UserResp 타입 (userId 획득용)
+ * - Spring: StayAccommodationController.java : GET /api/stay/accommodations/{id}  (permitAll)
+ * - Spring: SubscriptionsController.java     : POST /api/waiting/apply/{leaderId} (인증 필요)
  * ----------------------------------------------------------------------------------
  * [기능 목록]
  * - 숙소 정보 조회 및 표시 (이름, 주소, 월세)
- * - 대표자 자동 설정 (TEMP_USER_ID)
+ * - 로그인 유저가 대표자로 자동 설정 (/api/users 로 userId 획득)
  * - 팀원 추가 / 삭제 (0명부터 자유롭게)
  * - 계약 개월수 선택 (1~12개월)
  * - 팀당 월세 실시간 계산 (대표자 포함 총 인원 기준)
@@ -36,7 +38,8 @@ import {
   StayAccommodationPriceDto,
 } from '../../accommodations/page';
 import { calcTeamPrice } from '../../accommodations/[id]/page';
-import api, { TEMP_USER_ID } from '@/app/lib/auth';
+import { api } from '@/lib/api';
+import { UserResp } from '@/types/auth';
 
 export default function SubscribePage() {
   const params = useParams();
@@ -52,7 +55,7 @@ export default function SubscribePage() {
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [durationMonths, setDurationMonths] = useState(1);
 
-  const leaderId = TEMP_USER_ID;
+  const [leaderId, setLeaderId] = useState<number | null>(null);
 
   // 팀 인원 (대표자 + 입력된 팀원)
   const totalMembers = memberIds.length + 1;
@@ -68,14 +71,19 @@ export default function SubscribePage() {
     : 0;
 
   useEffect(() => {
-    api.get(`/api/stay/accommodations/${accommodationId}`)
-      .then((r) => r.data)
-      .then((data) => {
-        console.log('숙소 데이터:', data);
-        setAccommodation(data);
-        setPrices(data.prices ?? []);
+    // userId 획득 + 숙소 정보 병렬 조회
+    Promise.all([
+      api.get<UserResp>('/api/users'),
+      api.get<StayAccommodationDto>(`/api/stay/accommodations/${accommodationId}`),
+    ])
+      .then(([userData, accommodationData]) => {
+        console.log('유저 데이터:', userData);
+        console.log('숙소 데이터:', accommodationData);
+        setLeaderId(userData.userId);
+        setAccommodation(accommodationData);
+        setPrices(accommodationData.prices ?? []);
       })
-      .catch((err) => console.log('숙소 조회 실패:', err))
+      .catch((err) => console.log('데이터 조회 실패:', err))
       .finally(() => setLoading(false));
   }, [accommodationId]);
 
@@ -104,8 +112,7 @@ export default function SubscribePage() {
 
     console.log('구독 신청 요청:', body);
 
-    api.post(`/api/waiting/apply/${leaderId}`, body)
-      .then((r) => r.data)
+    api.post<unknown>(`/api/waiting/apply/${leaderId}`, body)
       .then((data) => {
         console.log('구독 신청 완료:', data);
         alert('구독 신청이 완료됐어요! 관리자 승인을 기다려주세요.');
@@ -139,7 +146,7 @@ export default function SubscribePage() {
         {/* 대표자 */}
         <div className={styles.formGroup}>
           <label className={styles.label}>대표자 ID</label>
-          <input className={styles.input} value={leaderId} disabled />
+          <input className={styles.input} value={leaderId ?? ''} disabled />
           <span className={styles.hint}>
             ※ 로그인한 유저가 대표자로 자동 설정됩니다.
           </span>

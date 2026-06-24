@@ -6,10 +6,10 @@
  * 사용처 : /my/reservations 진입 시 렌더링, Navbar "내 예약" 클릭 시 이동
  * ----------------------------------------------------------------------------------
  * [연관 파일]
- * - app/lib/auth.ts : api 인스턴스, TEMP_USER_ID
+ * - lib/api.ts : fetch 기반 API 클라이언트 (Bearer 토큰 자동 첨부)
  * - Spring: StayReservationController.java
- *     GET   /api/stay/reservations?userId=       : 내 예약 목록 조회
- *     PATCH /api/stay/reservations/{id}/cancel   : 예약 취소
+ *     GET   /api/stay/reservations             : 내 예약 목록 조회 (userId는 서버에서 JWT로 획득)
+ *     PATCH /api/stay/reservations/{id}/cancel : 예약 취소 (userId는 서버에서 JWT로 획득)
  * ----------------------------------------------------------------------------------
  * [기능 목록]
  * - 내 예약 목록 조회 및 표시
@@ -18,12 +18,13 @@
  * - 취소 시 리스트 상태 즉시 업데이트 (전체 재조회 없이 setReservations)
  * ----------------------------------------------------------------------------------
  * [파일 흐름과 순서]
- * 진입 → GET /api/stay/reservations?userId=TEMP_USER_ID → setReservations
+ * 진입 → GET /api/stay/reservations → setReservations (서버가 JWT로 본인 예약만 반환)
  * → 취소 버튼 클릭 → confirm → PATCH /api/stay/reservations/{id}/cancel
- * → 성공 시 해당 예약 status: 'CANCELLED'로 즉시 업데이트
+ * → 성공 시 해당 예약 status: 'CANCELLED' 로 즉시 업데이트
  * ----------------------------------------------------------------------------------
  * [주의사항 / 참고]
- * ⚠️ [TODO] 로그인 연동 후: TEMP_USER_ID → 로그인 유저 ID로 교체
+ * - 비로그인 시 lib/api.ts가 /login 으로 자동 리다이렉트
+ * - cancelReservation은 Boolean(true) 반환 → fetch JSON 파싱 정상 처리
  * ==================================================================================
  */
 
@@ -31,7 +32,7 @@
 
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
-import api, { TEMP_USER_ID } from '@/app/lib/auth';
+import { api } from '@/lib/api';
 import ReservationRouteMap from './components/ReservationRouteMap';
 
 interface ReservationDto {
@@ -50,8 +51,7 @@ export default function MyReservationsPage() {
 
   useEffect(() => {
     api
-      .get(`/api/stay/reservations?userId=${TEMP_USER_ID}`)
-      .then((r) => r.data)
+      .get<ReservationDto[]>('/api/stay/reservations')
       .then((data) => {
         console.log('내 예약 목록:', data);
         setReservations(Array.isArray(data) ? data : []);
@@ -60,12 +60,12 @@ export default function MyReservationsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // 예약 취소
+  // 예약 취소 (userId는 서버에서 JWT로 자동 처리)
   const handleCancel = (id: number) => {
     if (!confirm('예약을 취소할까요?')) return;
 
     api
-      .patch(`/api/stay/reservations/${id}/cancel?userId=${TEMP_USER_ID}`)
+      .patch<boolean>(`/api/stay/reservations/${id}/cancel`, {})
       .then(() => {
         console.log('예약 취소 완료:', id);
         // 취소된 예약 상태 업데이트

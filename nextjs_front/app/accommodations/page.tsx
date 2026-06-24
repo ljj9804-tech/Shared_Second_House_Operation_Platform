@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AccommodationCard from './components/AccommodationCard';
 import PriceCalculator from '../components/PriceCalculator';
 import styles from './page.module.css';
+import { api } from '@/lib/api';
 
 // 숙소 가격 구간 타입
 export interface StayAccommodationPriceDto {
@@ -69,7 +70,7 @@ interface PageResponse<T> {
  * ==================================================================================
  */
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 4;
 
 export default function AccommodationsPage() {
   const [accommodations, setAccommodations] = useState<StayAccommodationDto[]>(
@@ -86,18 +87,14 @@ export default function AccommodationsPage() {
   const [months, setMonths] = useState(1);
 
   useEffect(() => {
-    setLoading(true);
     const params = new URLSearchParams({
       page: String(currentPage),
       size: String(PAGE_SIZE),
     });
     if (keyword) params.set('keyword', keyword);
 
-    fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations?${params}`
-    )
-      .then((res) => res.json())
-      .then((data: PageResponse<StayAccommodationDto>) => {
+    api.get<PageResponse<StayAccommodationDto>>(`/api/stay/accommodations?${params}`)
+      .then((data) => {
         setAccommodations(data.content);
         setTotalPages(data.totalPages);
       })

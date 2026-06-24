@@ -41,8 +41,11 @@ public class StayAccommodationServiceImpl implements StayAccommodationService {
         log.info("✅ [StayAccommodationService] 숙소 목록 조회 → keyword: {}, page: {}", keyword, pageable.getPageNumber());
         List<StayAccommodationPriceDto> prices = getCommonPrices();
         Page<StayAccommodation> page = (keyword == null || keyword.isBlank())
+                // 검색어가 없는 경우 전체 숙소 페이징
                 ? accommodationRepository.findAll(pageable)
+                // 검색어가 있는 경우
                 : accommodationRepository.findByNameContainingIgnoreCase(keyword, pageable);
+        // 엔티티 구조를 DTO 구조로 변환
         Page<StayAccommodationResponseDto> result = page.map(a -> StayAccommodationResponseDto.from(a, prices));
         log.info("✅ [StayAccommodationService] 숙소 목록 조회 완료 → {}개 / 전체 {}페이지", result.getNumberOfElements(), result.getTotalPages());
         return result;
