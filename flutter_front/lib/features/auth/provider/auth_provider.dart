@@ -12,9 +12,27 @@ class AuthProvider extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  int? userId;
+  String? username;
+
+  /// 앱 시작 시 토큰 유효성까지 서버에 확인
   Future<void> checkAuthStatus() async {
     final hasToken = await SecureStorage.instance.hasAccessToken();
-    status = hasToken ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+    if (!hasToken) {
+      status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      await _fetchAndSetUserInfo();
+      status = AuthStatus.authenticated;
+    } catch (_) {
+      await SecureStorage.instance.clearAccessToken();
+      userId = null;
+      username = null;
+      status = AuthStatus.unauthenticated;
+    }
     notifyListeners();
   }
 
@@ -35,15 +53,31 @@ class AuthProvider extends ChangeNotifier {
       final accessToken = body['accessToken'] as String;
       await SecureStorage.instance.saveAccessToken(accessToken);
 
+      await _fetchAndSetUserInfo();
       status = AuthStatus.authenticated;
       return true;
     } on DioException catch (e) {
       errorMessage = _parseError(e);
       return false;
+    } catch (_) {
+      await SecureStorage.instance.clearAccessToken();
+      errorMessage = '로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.';
+      return false;
     } finally {
       isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// GET /api/users 호출해서 userId, username 채움
+  Future<void> _fetchAndSetUserInfo() async {
+    final response = await DioClient.instance.dio.get(ApiConstants.myInfo);
+    final body = response.data is String
+        ? jsonDecode(response.data as String)
+        : response.data;
+
+    userId = body['userId'] as int?;
+    username = body['username'] as String?;
   }
 
   String _parseError(DioException e) {
@@ -61,9 +95,11 @@ class AuthProvider extends ChangeNotifier {
     try {
       await DioClient.instance.dio.post(ApiConstants.logout);
     } catch (_) {
-      // 서버 호출이 실패해도 로컬 로그아웃은 진행
+      // 서버 호출 실패해도 로컬 로그아웃은 진행
     } finally {
       await SecureStorage.instance.clearAccessToken();
+      userId = null;
+      username = null;
       status = AuthStatus.unauthenticated;
       notifyListeners();
     }
