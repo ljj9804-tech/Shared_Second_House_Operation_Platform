@@ -32,6 +32,7 @@
 import { useEffect, useState } from 'react';
 import styles from './page.module.css';
 import api, { TEMP_USER_ID } from '@/app/lib/auth';
+import ReservationRouteMap from './components/ReservationRouteMap';
 
 interface ReservationDto {
   id: number;
@@ -143,6 +144,13 @@ export default function MyReservationsPage() {
                     예약 취소
                   </button>
                 )}
+
+              {/* 이 예약 기간에 기록된 이동경로 지도 (경로 없으면 자동 숨김) */}
+              <ReservationRouteMap
+                accommodationId={reservation.accommodationId}
+                startDate={reservation.startDate}
+                endDate={reservation.endDate}
+              />
             </div>
           ))}
         </div>

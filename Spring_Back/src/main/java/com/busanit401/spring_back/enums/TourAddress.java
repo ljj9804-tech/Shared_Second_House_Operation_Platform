@@ -12,7 +12,7 @@ public enum TourAddress {
     ULSAN("울산", "31"),
     SEJONG("세종", "36"),
     GYEONGGI("경기", "41"),
-    GANGWON("강원", "32"),
+    GANGWON("강원", "51"),
     CHUNGBUK("충북", "43"),
     CHUNGNAM("충남", "44"),
     JEONBUK("전북", "52"),
