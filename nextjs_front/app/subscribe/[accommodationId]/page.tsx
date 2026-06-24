@@ -37,9 +37,10 @@ import {
   StayAccommodationDto,
   StayAccommodationPriceDto,
 } from '../../accommodations/page';
-import { calcTeamPrice } from '../../accommodations/[id]/page';
+import { calcTeamPrice } from '@/app/lib/priceUtils';
 import { api } from '@/lib/api';
 import { UserResp } from '@/types/auth';
+import { tokenStorage } from '@/lib/token';
 
 export default function SubscribePage() {
   const params = useParams();
@@ -71,6 +72,11 @@ export default function SubscribePage() {
     : 0;
 
   useEffect(() => {
+    if (!tokenStorage.get()) {
+      router.push('/login');
+      return;
+    }
+
     // userId 획득 + 숙소 정보 병렬 조회
     Promise.all([
       api.get<UserResp>('/api/users'),

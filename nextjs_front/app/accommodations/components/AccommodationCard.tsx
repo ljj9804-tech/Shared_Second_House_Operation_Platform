@@ -26,7 +26,8 @@
 
 import { useRouter } from 'next/navigation';
 import styles from './AccommodationCard.module.css';
-import { StayAccommodationDto, StayAccommodationPriceDto } from '../page';
+import { StayAccommodationDto } from '../page';
+import { calcTeamPrice } from '@/app/lib/priceUtils';
 
 interface AccommodationCardProps {
   accommodation: StayAccommodationDto;
@@ -34,20 +35,6 @@ interface AccommodationCardProps {
   months: number;
 }
 
-// 팀당 월세 계산 함수
-function calcTeamPrice(
-  monthlyPrice: number,
-  prices: StayAccommodationPriceDto[],
-  months: number,
-  teams: number
-): number {
-  const priceInfo = prices.find(
-    (p) =>
-      months >= p.minMonths && (p.maxMonths === null || months < p.maxMonths)
-  );
-  if (!priceInfo) return 0;
-  return Math.floor((monthlyPrice * (1 - priceInfo.discountRate)) / teams);
-}
 
 export default function AccommodationCard({
   accommodation,

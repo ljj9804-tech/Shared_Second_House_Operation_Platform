@@ -36,6 +36,7 @@ import 'package:flutter_front/common/widget/common_button.dart';
 import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
 import 'package:flutter_front/domain/service/stay_subscription_service.dart';
+import 'package:flutter_front/util/price_calculator.dart';
 
 class StaySubscriptionApplyScreen extends StatefulWidget {
   final StayAccommodationDto accommodation;
@@ -76,19 +77,6 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
     });
   }
 
-  // Next.js calcTeamPrice와 동일: discountRate 적용 후 팀 인원으로 나눔
-  int _calcTeamPrice(StayAccommodationDto item, int months, int teams) {
-    StayAccommodationPriceDto? priceInfo;
-    for (final p in item.prices) {
-      final maxMonths = p.maxMonths;
-      if (months >= p.minMonths && (maxMonths == null || months < maxMonths)) {
-        priceInfo = p;
-        break;
-      }
-    }
-    if (priceInfo == null) return (item.monthlyPrice / teams).floor();
-    return (item.monthlyPrice * (1 - priceInfo.discountRate) / teams).floor();
-  }
 
   Future<void> _handleSubmit() async {
     final memberIds = _memberControllers
@@ -305,7 +293,12 @@ class _StaySubscriptionApplyScreenState extends State<StaySubscriptionApplyScree
   Widget _buildPriceSummary(StayAccommodationDto item) {
     final filledCount = _memberControllers.where((c) => c.text.trim().isNotEmpty).length;
     final teamCount = filledCount + 1; // 실제 입력된 팀원 + 대표자
-    final teamPrice = _calcTeamPrice(item, _durationMonths, teamCount);
+    final teamPrice = PriceCalculator.calculateTeamPrice(
+      monthlyPrice: item.monthlyPrice,
+      months: _durationMonths,
+      teams: teamCount,
+      prices: item.prices,
+    );
 
     return Container(
       padding: const EdgeInsets.all(16),
