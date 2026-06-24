@@ -7,15 +7,17 @@ import { StayAccommodationDto } from './accommodations/page';
 
 export default function Home() {
   const router = useRouter();
-  const [accommodations, setAccommodations] = useState<StayAccommodationDto[]>([]);
+  const [accommodations, setAccommodations] = useState<StayAccommodationDto[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations?page=0&size=3`)
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations`)
       .then((r) => r.json())
       .then((data) => {
         console.log('[Home] 숙소 목록:', data);
-        setAccommodations(data.content ?? []);
+        setAccommodations(data);
       })
       .catch((err) => console.log('[Home] 데이터 조회 실패:', err))
       .finally(() => setLoading(false));
@@ -32,7 +34,7 @@ export default function Home() {
           <div className={styles.loading}>불러오는 중...</div>
         ) : (
           <div className={styles.grid}>
-            {accommodations.map((accommodation) => (
+            {accommodations.slice(0, 3).map((accommodation) => (
               <div
                 key={accommodation.id}
                 className={styles.card}
@@ -79,80 +81,14 @@ export default function Home() {
           </div>
         )}
 
-        {/* 🟢 하단 하이라이트 버튼 섹션 (기존 버튼들에 상품 스토어 버튼을 유기적으로 결합) */}
-        <div 
-          className={styles.moreWrap} 
-          style={{ 
-            display: 'flex', 
-            gap: '15px', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            marginTop: '30px'
-          }}
-        >
-          {/* 1. 숙소 목록 더보기 버튼 */}
+        {/* 숙소 목록 더 보기 버튼 */}
+        <div className={styles.moreWrap}>
           <button
             className="btn-outline"
             onClick={() => router.push('/accommodations')}
-            style={{ margin: 0 }}
           >
             숙소 목록 더 보러가기
           </button>
-
-          {/* 2. 🍔 [신규 추가] 푸드 & 서비스 상품 스토어 이동 버튼 */}
-          <div 
-            onClick={() => router.push('/product')}
-            className="cursor-pointer text-slate-700 hover:text-emerald-500 font-bold transition-colors duration-200"
-            style={{ 
-              padding: '10px 20px', 
-              border: '1px solid #cbd5e1', 
-              borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            🍔 상품 스토어 구경하기
-          </div>
-
-          {/* 3. 🛒 장바구니 목록 이동 버튼 */}
-          <div 
-            onClick={() => router.push('/cart')}
-            className="cursor-pointer text-slate-700 hover:text-blue-500 font-bold transition-colors duration-200"
-            style={{ 
-              padding: '10px 20px', 
-              border: '1px solid #cbd5e1', 
-              borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            🛒 장바구니 목록 이동
-          </div>
-
-          {/* 4. 🚚 배달 관리 콘솔 이동 버튼 */}
-          <div 
-            onClick={() => router.push('/delivery')}
-            className="cursor-pointer text-slate-700 hover:text-orange-500 font-bold transition-colors duration-200"
-            style={{ 
-              padding: '10px 20px', 
-              border: '1px solid #cbd5e1', 
-              borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            🚚 배달 관리 콘솔 이동
-          </div>
         </div>
       </section>
     </div>
