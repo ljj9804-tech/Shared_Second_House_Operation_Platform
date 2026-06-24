@@ -54,6 +54,17 @@ public class WaitingSubscriptionUserService {
         List<WaitingSubscriptionUser> waitingList = buildWaitingList(subscriptionsUser, leader, members);
         waitingRepository.saveAll(waitingList);
 
+        // 멤버 없이 대표만 신청한 경우 즉시 관리자 알림 발송
+        boolean allApproved = waitingList.stream()
+                .allMatch(w -> w.getStatus() == MemberStatus.APPROVED);
+        if (allApproved) {
+            notificationService.notifyAdmin(
+                    NotificationType.SUBSCRIPTION_READY,
+                    "새로운 구독 신청이 승인 대기 중입니다. (구독 ID: " + subscriptionsUser.getId() + ")",
+                    subscriptionsUser.getId()
+            );
+        }
+
         return waitingList.stream()
                 .map(WaitingSubscriptionResp::from)
                 .collect(Collectors.toList());

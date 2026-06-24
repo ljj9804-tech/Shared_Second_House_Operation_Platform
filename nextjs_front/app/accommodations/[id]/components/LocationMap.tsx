@@ -25,10 +25,10 @@
  * ==================================================================================
  */
 
-"use client";
+'use client';
 
-import styles from "./LocationMap.module.css";
-import { useEffect, useState } from "react";
+import styles from './LocationMap.module.css';
+import { useEffect, useState } from 'react';
 import {
   AdvancedMarker,
   APIProvider,
@@ -38,7 +38,7 @@ import {
   MapControl,
   Pin,
   useMap,
-} from "@vis.gl/react-google-maps";
+} from '@vis.gl/react-google-maps';
 
 interface PlaceDto {
   id: string;
@@ -57,12 +57,14 @@ interface LocationMapProps {
   accommodationId: number;
   latitude: number;
   longitude: number;
+  address: string;
 }
 
 export default function LocationMap({
   accommodationId,
   latitude,
   longitude,
+  address,
 }: LocationMapProps) {
   const [places, setPlaces] = useState<PlaceDto[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceDto | null>(null);
@@ -74,13 +76,13 @@ export default function LocationMap({
       try {
         // 내 DB에 저장된 숙소별 맛집 조회 (구글 호출은 백엔드 /sync에서 별도 수행)
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/places/restaurants?accommodationId=${accommodationId}`,
+          `${process.env.NEXT_PUBLIC_SERVER_URL}/api/places/restaurants?accommodationId=${accommodationId}`
         );
         if (!res.ok) throw new Error();
         const data = await res.json();
         setPlaces(data);
       } catch {
-        setError("맛집 정보를 가져오지 못했어요. 😢");
+        setError('맛집 정보를 가져오지 못했어요. 😢');
       } finally {
         setIsLoading(false);
       }
@@ -89,20 +91,23 @@ export default function LocationMap({
   }, [accommodationId]);
 
   return (
-    <div className={styles.screen}>
-      <header className={styles.appBar}>주변 맛집</header>
+    // <div className={styles.screen}>
+    //   <header className={styles.appBar}>주변 맛집</header>
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>주변 맛집</h2>
+      <p className={styles.address}>{address}</p>
 
       <div className={styles.mapWrap}>
         {/* 1. API 키 설정 */}
-        <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY || ""}>
+        <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_KEY || ''}>
           {/* 2. 지도 띄우기 */}
           <Map
             defaultCenter={{ lat: latitude, lng: longitude }}
             defaultZoom={15}
             disableDefaultUI={true} // 기존의 구글 기본 버튼들(로드뷰 등) 한방에 숨기기
             className={styles.map}
-            mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || "DEMO_MAP_ID"}
-            gestureHandling={"greedy"} //인삿말 안하기
+            mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || 'DEMO_MAP_ID'}
+            gestureHandling={'greedy'} //인삿말 안하기
             scrollwheel={false} // 1. 휠로 확대되는 건 끈다! (스크롤 방해 금지)
             zoomControl={true} // 3. 👈 확대/축소 (+, -) 버튼 딱 이거 하나만 우측 하단에 띄운다!
           >
@@ -130,8 +135,8 @@ export default function LocationMap({
                   onClick={() => setSelectedPlace(p)} // 클릭하면 이 맛집을 선택!
                 >
                   <Pin
-                    background={isTop ? "#EA4335" : "#FB8C00"}
-                    borderColor={isTop ? "#C5221F" : "#E07B00"}
+                    background={isTop ? '#EA4335' : '#FB8C00'}
+                    borderColor={isTop ? '#C5221F' : '#E07B00'}
                     glyphColor="#ffffff"
                   />
                 </AdvancedMarker>
@@ -149,18 +154,18 @@ export default function LocationMap({
               >
                 <div
                   style={{
-                    padding: "4px",
-                    fontSize: "13px",
-                    maxWidth: "220px",
-                    color: "#000",
+                    padding: '4px',
+                    fontSize: '13px',
+                    maxWidth: '220px',
+                    color: '#000',
                   }}
                 >
                   <strong>{selectedPlace.name}</strong>
                   <br />
-                  <span style={{ color: "#555" }}>
+                  <span style={{ color: '#555' }}>
                     {[selectedPlace.primaryType, selectedPlace.phoneNumber]
                       .filter(Boolean)
-                      .join(" · ") || "상세는 아래 링크에서"}
+                      .join(' · ') || '상세는 아래 링크에서'}
                   </span>
                   <br />
                   {todayHours(selectedPlace) && (
@@ -174,12 +179,12 @@ export default function LocationMap({
                       href={selectedPlace.googleMapsUri}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: "#23399d", fontWeight: 600 }}
+                      style={{ color: '#23399d', fontWeight: 600 }}
                     >
                       구글지도에서 보기 ↗
                     </a>
                   ) : (
-                    <span style={{ color: "#888" }}>상세 정보 없음 😢</span>
+                    <span style={{ color: '#888' }}>상세 정보 없음 😢</span>
                   )}
                 </div>
               </InfoWindow>
@@ -199,7 +204,8 @@ export default function LocationMap({
         )}
         {error && !isLoading && <div className={styles.overlay}>{error}</div>}
       </div>
-    </div>
+      {/* </div> */}
+    </section>
   );
 }
 /// 🕐 오늘 요일 기준 영업시간 한 줄 추출 (weekdayDescriptions에서 "월요일: ..." 매칭)
@@ -207,13 +213,13 @@ function todayHours(p: PlaceDto): string | null {
   if (!p.weekdayDescriptions || p.weekdayDescriptions.length === 0) return null;
   // getDay(): 0=일 ~ 6=토
   const days = [
-    "일요일",
-    "월요일",
-    "화요일",
-    "수요일",
-    "목요일",
-    "금요일",
-    "토요일",
+    '일요일',
+    '월요일',
+    '화요일',
+    '수요일',
+    '목요일',
+    '금요일',
+    '토요일',
   ];
   const today = days[new Date().getDay()];
   return p.weekdayDescriptions.find((d) => d.startsWith(today)) ?? null;
@@ -223,15 +229,15 @@ function todayHours(p: PlaceDto): string | null {
 function TodayHoursLine({ place }: { place: PlaceDto }) {
   const hours = todayHours(place);
   if (!hours) return null;
-  const idx = hours.indexOf(":"); // "목요일: 시간들" → 라벨/본문 분리
-  const label = idx >= 0 ? hours.slice(0, idx + 1) : ""; // "목요일:"
+  const idx = hours.indexOf(':'); // "목요일: 시간들" → 라벨/본문 분리
+  const label = idx >= 0 ? hours.slice(0, idx + 1) : ''; // "목요일:"
   const body = (idx >= 0 ? hours.slice(idx + 1) : hours).trim();
-  const ranges = body.split(",").map((r) => r.trim()); // 콤마 제거 + 시간대 분리
+  const ranges = body.split(',').map((r) => r.trim()); // 콤마 제거 + 시간대 분리
 
   return (
-    <span style={{ color: "#1a7f37", display: "flex" }}>
-      <span style={{ whiteSpace: "nowrap" }}>🕐 {label}&nbsp;</span>
-      <span style={{ display: "flex", flexDirection: "column" }}>
+    <span style={{ color: '#1a7f37', display: 'flex' }}>
+      <span style={{ whiteSpace: 'nowrap' }}>🕐 {label}&nbsp;</span>
+      <span style={{ display: 'flex', flexDirection: 'column' }}>
         {ranges.map((r, i) => (
           <span key={i}>{r}</span>
         ))}
@@ -264,19 +270,19 @@ function RecenterButton({
       type="button"
       onClick={handleRecenter}
       style={{
-        margin: "10px",
-        padding: "10px 14px",
-        backgroundColor: "#ffffff",
-        border: "none",
-        borderRadius: "8px",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "bold",
-        color: "#333",
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
+        margin: '10px',
+        padding: '10px 14px',
+        backgroundColor: '#ffffff',
+        border: 'none',
+        borderRadius: '8px',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        color: '#333',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
       }}
     >
       🏠 숙소 위치로

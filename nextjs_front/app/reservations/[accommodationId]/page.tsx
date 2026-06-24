@@ -1,3 +1,40 @@
+/*
+ * ==================================================================================
+ * [파일 정보]
+ * 위치  : app/reservations/[accommodationId]/page.tsx
+ * 역할  : 예약하기 페이지 (날짜 선택 달력 + 예약 생성)
+ * 사용처 : 숙소 상세 페이지 "예약하기" 버튼 클릭 시 이동 (구독 ACTIVE 상태 필수)
+ * ----------------------------------------------------------------------------------
+ * [연관 파일]
+ * - lib/api.ts : fetch 기반 API 클라이언트 (Bearer 토큰 자동 첨부)
+ * - types/auth.ts : UserResp 타입 (userId 획득용)
+ * - Spring: StayReservationController.java
+ *     GET  /api/stay/reservations/accommodation/{id} : 숙소별 확정 예약 목록 (달력용)
+ *     POST /api/stay/reservations                    : 예약 생성
+ * - Spring: SubscriptionsController.java
+ *     GET  /api/subscriptions/my/{userId}            : 내 구독 정보 (예약 가능 기간 확인)
+ * ----------------------------------------------------------------------------------
+ * [기능 목록]
+ * - 구독 기간 내에서만 날짜 선택 가능 (minDate, maxDate 구독 기간 연동)
+ * - 이미 예약된 날짜(CONFIRMED) 달력에서 비활성화 표시
+ * - 시작일 선택 후 다음 예약 직전까지만 종료일 선택 가능 (dynamicMaxDate)
+ * - 최소 1박 2일 강제 (종료일 > 시작일)
+ * - 예약 실패 시 달력 즉시 갱신 (다른 사용자 예약 반영)
+ * - 탭 전환 후 돌아올 때 focus 이벤트로 달력 자동 갱신
+ * ----------------------------------------------------------------------------------
+ * [파일 흐름과 순서]
+ * 진입 → Promise.all([구독, 예약목록]) → 구독 기간 설정 + 예약 날짜 비활성화
+ * → 시작일 선택 → dynamicMaxDate 계산 → 종료일 선택
+ * → "예약 확정" 클릭 → POST /api/stay/reservations
+ * → 성공: /my/reservations 이동 / 실패: 달력 즉시 갱신
+ * ----------------------------------------------------------------------------------
+ * [주의사항 / 참고]
+ * - 비로그인 시 lib/api.ts가 /login 으로 자동 리다이렉트
+ * - parseLocalDate(): Spring LocalDate 배열([2026,6,25]) 또는 문자열 두 형태 모두 처리
+ * - formatLocalDate(): toISOString() 대신 로컬 기준 포맷 (UTC+9 하루 밀림 방지)
+ * ==================================================================================
+ */
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -6,7 +43,8 @@ import DatePicker from 'react-datepicker';
 import { ko } from 'date-fns/locale';
 import 'react-datepicker/dist/react-datepicker.css';
 import styles from './page.module.css';
-import api, { TEMP_USER_ID } from '@/app/lib/auth';
+import { api } from '@/lib/api';
+import { UserResp } from '@/types/auth';
 
 // Spring LocalDate가 배열([2026,6,25]) 또는 문자열("2026-06-25") 두 형태로 올 수 있음
 // 로컬 자정 기준으로 변환해야 한국(UTC+9)에서 하루 밀림 현상 없음
@@ -52,12 +90,11 @@ export default function ReservationPage() {
   const [subscription, setSubscription] = useState<SubscriptionDto | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const userId = TEMP_USER_ID;
+  const [userId, setUserId] = useState<number | null>(null);
 
   // 예약 데이터 fetch (실시간 갱신을 위해 함수로 분리)
   const fetchReservations = useCallback(() => {
-    api.get(`/api/stay/reservations/accommodation/${accommodationId}`)
-      .then((r) => r.data)
+    api.get<ReservationDto[]>(`/api/stay/reservations/accommodation/${accommodationId}`)
       .then((reservationsData) => {
         console.log('[ReservationPage] 예약 데이터 갱신:', reservationsData);
         const dates: Date[] = [];
@@ -80,12 +117,16 @@ export default function ReservationPage() {
       .catch((err) => console.log('[ReservationPage] 예약 데이터 갱신 실패:', err));
   }, [accommodationId]);
 
-  // 초기 로딩 (구독 + 예약 데이터)
+  // 초기 로딩 (userId 획득 → 구독 + 예약 데이터 병렬 조회)
   useEffect(() => {
-    Promise.all([
-      api.get(`/api/subscriptions/my/${userId}`).then((r) => r.data),
-      api.get(`/api/stay/reservations/accommodation/${accommodationId}`).then((r) => r.data),
-    ])
+    api.get<UserResp>('/api/users')
+      .then((userData) => {
+        setUserId(userData.userId);
+        return Promise.all([
+          api.get<SubscriptionDto[]>(`/api/subscriptions/my/${userData.userId}`),
+          api.get<ReservationDto[]>(`/api/stay/reservations/accommodation/${accommodationId}`),
+        ]);
+      })
       .then(([subscriptionData, reservationsData]) => {
         console.log('[ReservationPage] 구독 데이터:', subscriptionData);
         console.log('[ReservationPage] 예약 데이터:', reservationsData);
@@ -167,22 +208,20 @@ export default function ReservationPage() {
 
     const body = {
       accommodationId: Number(accommodationId),
-      userId: userId,
       startDate: formatLocalDate(startDate),
       endDate: formatLocalDate(endDate),
     };
 
     console.log('[ReservationPage] 예약 생성 요청:', body);
 
-    api.post(`/api/stay/reservations`, body)
-      .then((r) => r.data)
+    api.post<unknown>(`/api/stay/reservations`, body)
       .then((data) => {
         console.log('[ReservationPage] 예약 생성 완료:', data);
         alert('예약이 완료됐어요!');
         router.push('/my/reservations');
       })
       .catch((err) => {
-        const msg = err.response?.data?.message ?? '예약에 실패했어요. 다시 시도해주세요.';
+        const msg = err instanceof Error ? err.message : '예약에 실패했어요. 다시 시도해주세요.';
         console.log('[ReservationPage] 예약 생성 실패:', err);
         alert(msg);
         // 실패 시 달력 즉시 갱신 (다른 사용자가 먼저 예약한 경우 반영)
