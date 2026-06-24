@@ -29,13 +29,17 @@ public class RouteController {
     private final RouteService routeService;
 
     @Operation(summary = "📱 [Flutter] 추적 시작 (세션 생성)",
-            description = "이동경로 추적을 시작할 때 호출. 새 세션을 만들고 sessionId를 반환한다.")
+            description = "이동경로 추적을 시작할 때 호출. 새 세션을 만들고 sessionId를 반환한다. 유저는 JWT에서 획득한다.")
     @PostMapping("/sessions")
     public ResponseEntity<Map<String, Object>> startSession(
-            @Parameter(description = "유저 id", example = "1")
-            @RequestParam Long userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Long sessionId = routeService.startSession(userId);
+        // 토큰이 없거나 무효하면 principal이 null → NPE(500) 대신 명확히 401 반환
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+        Long sessionId = routeService.startSession(userDetails.getId());
         return ResponseEntity.ok(Map.of("success", true, "sessionId", sessionId));
     }
 
@@ -73,13 +77,15 @@ public class RouteController {
     }
 
     @Operation(summary = "📱 [Flutter] 세션 이력 조회",
-            description = "유저의 이동경로 세션 목록을 최신순으로 반환한다.")
+            description = "유저의 이동경로 세션 목록을 최신순으로 반환한다. 유저는 JWT에서 획득한다.")
     @GetMapping("/sessions")
     public ResponseEntity<List<RouteSessionDTO>> getSessions(
-            @Parameter(description = "유저 id", example = "1")
-            @RequestParam Long userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        return ResponseEntity.ok(routeService.getSessions(userId));
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(routeService.getSessions(userDetails.getId()));
     }
 
     @Operation(summary = "💻 [Next.js] 기간별 경로 조회 (세션+좌표 묶음)",

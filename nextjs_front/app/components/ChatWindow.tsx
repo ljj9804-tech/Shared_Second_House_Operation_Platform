@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import styles from "./ChatWindow.module.css";
+import { api } from "@/lib/api";
 
 interface ChatBotSource {
   id: string;
@@ -64,12 +65,10 @@ export default function ChatWindow({ onClose }: { onClose?: () => void }) {
     setMessages(updatedMessages);
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/chatBot/chat?q=${encodeURIComponent(q)}&topK=3`,
+      // api.get 이 accessToken 을 Authorization: Bearer 로 자동 첨부 (JWT 인증)
+      const data = await api.get<{ answer: string; sources?: ChatBotSource[] }>(
+        `/api/chatBot/chat?q=${encodeURIComponent(q)}&topK=3`,
       );
-      if (!res.ok) throw new Error();
-
-      const data = await res.json();
       setMessages([
         ...updatedMessages,
         { text: data.answer, isMe: false, sources: data.sources },

@@ -36,12 +36,15 @@ class LocationTaskHandler extends TaskHandler {
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     _sessionId = await FlutterForegroundTask.getData<int>(key: 'sessionId');
     final baseUrl = await FlutterForegroundTask.getData<String>(key: 'baseUrl');
+    // 이 isolate엔 DioClient(토큰 인터셉터)가 없으므로 UI isolate가 넘겨준 토큰을 직접 사용
+    final accessToken =
+        await FlutterForegroundTask.getData<String>(key: 'accessToken');
 
     if (_sessionId == null || baseUrl == null) {
       debugPrint('❌ [추적 isolate] sessionId/baseUrl 누락 — 추적 시작 불가');
       return;
     }
-    _service = RouteService(baseUrl);
+    _service = RouteService(baseUrl, accessToken: accessToken);
     debugPrint('🟢 [추적 isolate] 시작 sessionId=$_sessionId');
 
     // 50m 이상 이동할 때만 좌표 1개 기록 (GPS 잔떨림으로 인한 불필요한 점 방지)
