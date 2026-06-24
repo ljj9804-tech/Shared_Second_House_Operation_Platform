@@ -19,37 +19,24 @@
  * ==================================================================================
  */
 
-'use client';
-
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import styles from './Navbar.module.css';
-import { tokenStorage } from '@/lib/token';
-import { api } from '@/lib/api';
-import { UserResp } from '@/types/auth';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import styles from "./Navbar.module.css";
+import { TEMP_USER_ID } from "@/app/lib/auth";
+import { api } from "@/lib/api";
+import { UserResp } from "@/types/auth";
 
 export default function Navbar() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<UserResp | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const token = tokenStorage.get();
-    if (!token) {
-      setUser(null);
-      setAuthLoading(false);
-      return;
-    }
-
     api
-      .get<UserResp>('/api/users')
-      .then((data) => {
-        console.log('[Navbar] 로그인 유저:', data);
-        setUser(data);
+      .get<UserResp>("/api/users")
+      .then((user) => {
+        setIsAdmin(user.role === "ADMIN");
       })
       .catch(() => {
+seonggyu
         // 토큰 만료 등 → lib/api.ts가 자동으로 /login 리다이렉트 처리
         setUser(null);
       })
@@ -62,6 +49,13 @@ export default function Navbar() {
     router.push('/');
   };
 const isAdmin = true;
+=======
+        // 비로그인 상태 등 - admin 아님으로 처리, Navbar는 정상 노출
+        setIsAdmin(false);
+      });
+  }, []);
+
+middle
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
@@ -75,6 +69,7 @@ const isAdmin = true;
           <Link href="/accommodations" className={styles.navItem}>
             숙소 목록
           </Link>
+seonggyu
           <Link href="/my/reservations" className={styles.navItem}>
             내 예약
           </Link>
@@ -85,6 +80,14 @@ const isAdmin = true;
           장바구니
         </Link>
         <Link href="/mypage" className={styles.navItem}>
+=======
+          {isAdmin && (
+            <Link href="/accommodations" className={styles.navItem}>
+              숙소 등록
+            </Link>
+          )}
+          <Link href="/mypage" className={styles.navItem}>
+ middle
             마이페이지
           </Link>
           
