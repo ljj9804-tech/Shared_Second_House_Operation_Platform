@@ -57,8 +57,8 @@ export default function SubscribePage() {
 
   const [leaderId, setLeaderId] = useState<number | null>(null);
 
-  // 팀 인원 (대표자 + 입력된 팀원)
-  const totalMembers = memberIds.length + 1;
+  // 팀 인원 (대표자 + 실제 입력된 팀원)
+  const totalMembers = memberIds.filter((id) => id.trim() !== '').length + 1;
 
   // 팀당 월세 계산
   const teamPrice = accommodation

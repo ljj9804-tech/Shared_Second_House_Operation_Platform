@@ -19,6 +19,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter_front/core/api/dio_client.dart';
+import 'package:flutter_front/domain/dto/stay_subscription_dto.dart';
 
 class SubscriptionService {
   Dio get _dio => DioClient.instance.dio;
@@ -42,10 +43,12 @@ class SubscriptionService {
   }
 
   /// 내 구독 목록 조회 - GET /subscriptions/my/{userId}
-  Future<List<dynamic>> getMySubscriptions(int userId) async {
+  Future<List<StaySubscriptionDto>> getMySubscriptions(int userId) async {
     final response = await _dio.get('/subscriptions/my/$userId');
     if (response.data is! List) return [];
-    return response.data as List;
+    return (response.data as List)
+        .map((e) => StaySubscriptionDto.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// 내 초대 목록 조회 - GET /waiting/my/{userId}
