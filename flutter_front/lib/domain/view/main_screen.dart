@@ -48,6 +48,8 @@ import 'package:flutter_front/features/mypage/screen/mypage_screen.dart'; // 추
 // TODO: [개발 완료 시 삭제]
 import 'package:flutter_front/domain/view/dev_screen_links.dart';
 
+import 'delivery_screen.dart';
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -245,8 +247,8 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: [
           _buildHomeScaffold(ctrl),
-          _buildDeliveryScaffold(),
           // const GuestChatBotScreen(),
+          const DeliveryScreen(),
           const MyPageScreen(), // 추가
         ],
       ),
@@ -307,26 +309,26 @@ class _MainScreenState extends State<MainScreen> {
   // );
 
   // TODO: 배달 팀원이 이 메서드를 자신의 화면으로 교체
-  Widget _buildDeliveryScaffold() => Scaffold(
-    backgroundColor: AppColors.background,
-    appBar: AppBar(
-      title: const Text('배달', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-      centerTitle: true,
-      backgroundColor: AppColors.primary,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-    ),
-    body: const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.delivery_dining, size: 56, color: AppColors.textHint),
-          SizedBox(height: 16),
-          Text('배달 서비스 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
-        ],
-      ),
-    ),
-  );
+  // // Widget _buildDeliveryScaffold() => Scaffold(
+  //   backgroundColor: AppColors.background,
+  //   appBar: AppBar(
+  //     title: const Text('배달', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+  //     centerTitle: true,
+  //     backgroundColor: AppColors.primary,
+  //     elevation: 0,
+  //     automaticallyImplyLeading: false,
+  //   ),
+  //   body: const Center(
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Icon(Icons.delivery_dining, size: 56, color: AppColors.textHint),
+  //         SizedBox(height: 16),
+  //         Text('배달 서비스 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+  //       ],
+  //     ),
+  //   ),
+  // );
 
   Widget _buildHomeScaffold(StayAccommodationController ctrl) {
     return Scaffold(
