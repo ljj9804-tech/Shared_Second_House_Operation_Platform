@@ -91,6 +91,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
 
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+                        // 🔒 로그인 필수 — 챗봇 / 구글맵(주변 맛집) / 이동경로 트래킹
+                        // (아래 "/api/**" permitAll 보다 위에 둬야 먼저 매칭되어 인증이 강제됨)
+                        .requestMatchers("/api/chatBot/**", "/api/places/**", "/api/routes/**").authenticated()
                         .requestMatchers(
                                 "/",
                                 "/swagger-ui/**",

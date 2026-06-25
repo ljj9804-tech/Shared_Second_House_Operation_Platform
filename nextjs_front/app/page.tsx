@@ -13,7 +13,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations?page=0&size=3`)
+    fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations`)
       .then((r) => r.json())
       .then((data) => {
         console.log('[Home] 숙소 목록:', data);
@@ -34,7 +34,7 @@ export default function Home() {
           <div className={styles.loading}>불러오는 중...</div>
         ) : (
           <div className={styles.grid}>
-            {accommodations.map((accommodation) => (
+            {accommodations.slice(0, 3).map((accommodation) => (
               <div
                 key={accommodation.id}
                 className={styles.card}

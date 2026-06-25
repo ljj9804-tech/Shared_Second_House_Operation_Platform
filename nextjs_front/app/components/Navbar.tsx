@@ -23,6 +23,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import styles from "./Navbar.module.css";
 import { api } from "@/lib/api";
 import { tokenStorage } from "@/lib/token";
@@ -36,6 +38,13 @@ export default function Navbar() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
+    const token = tokenStorage.get();
+    if (!token) {
+      setUser(null);
+      setAuthLoading(false);
+      return;
+    }
+
     api
       .get<UserResp>("/api/users")
       .then((res) => {
@@ -73,6 +82,18 @@ export default function Navbar() {
           <Link href="/accommodations" className={styles.navItem}>
             숙소 목록
           </Link>
+          <Link href="/my/reservations" className={styles.navItem}>
+            내 예약
+          </Link>
+          <Link href="/product" className={styles.navItem}>
+            상품 스토어
+          </Link>
+          <Link href="/cart" className={styles.navItem}>
+            장바구니
+          </Link>
+          <Link href="/tours" className={styles.navItem}>
+            관광지
+          </Link>
           {isAdmin && (
             <Link href="/accommodations" className={styles.navItem}>
               숙소 등록
@@ -81,6 +102,17 @@ export default function Navbar() {
           <Link href="/mypage" className={styles.navItem}>
             마이페이지
           </Link>
+
+          {/* 👑 관리자 계정일 때만 배달 관리 콘솔 메뉴가 보임 */}
+          {isAdmin && (
+            <Link
+              href="/delivery"
+              className={styles.navItem}
+              style={{ color: "orange", fontWeight: "bold" }}
+            >
+              배달 관리 ★
+            </Link>
+          )}
 
           {authLoading ? null : user ? (
             <>

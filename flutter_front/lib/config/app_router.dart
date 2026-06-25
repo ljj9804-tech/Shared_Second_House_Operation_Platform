@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
 import 'package:flutter_front/domain/controller/stay_reservation_controller.dart';
+import 'package:flutter_front/domain/controller/stay_subscription_controller.dart';
 import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
 import 'package:flutter_front/domain/controller/restaurant_controller.dart';
 import 'package:flutter_front/domain/controller/route_controller.dart';
@@ -14,11 +15,11 @@ import 'package:flutter_front/features/auth/screen/signup_screen.dart';   // 추
 import 'package:flutter_front/features/auth/provider/signup_provider.dart';
 
 // [화면 Import]
-import 'package:flutter_front/domain/view/main_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
+import 'package:flutter_front/domain/view/stay_my_subscription_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_screen.dart';
 import 'package:flutter_front/features/auth/provider/google_signin_provider.dart';
 
@@ -35,6 +36,7 @@ class AppRouter extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()), // 추가
         ChangeNotifierProvider(create: (_) => StayAccommodationController()),
         ChangeNotifierProvider(create: (_) => StayReservationController()),
+        ChangeNotifierProvider(create: (_) => StaySubscriptionController()),
         ChangeNotifierProvider(create: (_) => ChatBotController()),
         ChangeNotifierProvider(create: (_) => RestaurantController()),
         ChangeNotifierProvider(create: (_) => RouteController()),
@@ -61,6 +63,8 @@ class AppRouter extends StatelessWidget {
           '/signup': (context) => const SignupScreen(),  // 추가
           '/accommodations': (context) => const StayAccommodationListScreen(),
           '/my/reservations': (context) => const StayMyReservationScreen(),
+          '/route': (context) => const LiveRouteMapScreen(),
+          '/my/subscriptions': (context) => const StayMySubscriptionScreen(),
           '/chat': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
             return GuestChatScreen(

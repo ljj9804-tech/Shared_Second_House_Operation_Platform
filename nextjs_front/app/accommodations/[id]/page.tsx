@@ -49,6 +49,8 @@ export default function AccommodationDetailPage() {
   const [subscriptionStatus, setSubscriptionStatus] =
     useState<SubscriptionStatus>("none");
   const [loading, setLoading] = useState(true);
+  // 서버가 인정한 유효 로그인 여부 (/api/users 성공 시 true) — LocationMap 지도 노출/과금 게이트
+  const [authed, setAuthed] = useState(false);
 
   const [teams, setTeams] = useState(1);
   const [months, setMonths] = useState(1);
