@@ -69,7 +69,7 @@ class AppRouter extends StatelessWidget {
           '/mypage': (context) => const MyPageScreen(), // 추가
           '/accommodations': (context) => const StayAccommodationListScreen(),
           '/my/reservations': (context) => const StayMyReservationScreen(),
-          '/route': (context) => const LiveRouteMapScreen(),
+          // '/route': (context) => const LiveRouteMapScreen(),
           '/my/subscriptions': (context) => const StayMySubscriptionScreen(),
           '/chat': (context) {
             final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
