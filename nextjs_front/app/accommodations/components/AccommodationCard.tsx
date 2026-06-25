@@ -22,7 +22,7 @@
  * ==================================================================================
  */
 
-'use client';
+"use client";
 
 import { useRouter } from 'next/navigation';
 import styles from './AccommodationCard.module.css';
@@ -33,6 +33,8 @@ interface AccommodationCardProps {
   accommodation: StayAccommodationDto;
   teams: number;
   months: number;
+  isAdmin?: boolean;
+  onEdit?: (accommodation: StayAccommodationDto) => void;
 }
 
 
@@ -40,12 +42,14 @@ export default function AccommodationCard({
   accommodation,
   teams,
   months,
+  isAdmin = false,
+  onEdit,
 }: AccommodationCardProps) {
   const router = useRouter();
 
   // 대표 이미지 (첫 번째 이미지)
   const firstImage = accommodation.imageUrl
-    ? `${process.env.NEXT_PUBLIC_SERVER_URL}${accommodation.imageUrl.split(',')[0].trim()}`
+    ? `${process.env.NEXT_PUBLIC_SERVER_URL}${accommodation.imageUrl.split(",")[0].trim()}`
     : null;
 
   // 팀당 월세 계산
@@ -53,14 +57,42 @@ export default function AccommodationCard({
     accommodation.monthlyPrice,
     accommodation.prices ?? [],
     months,
-    teams
+    teams,
   );
 
   return (
     <div
       className={styles.card}
       onClick={() => router.push(`/accommodations/${accommodation.id}`)}
+      style={{ position: "relative" }}
     >
+      {isAdmin && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(accommodation);
+          }}
+          className={styles.editBtn}
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 2,
+            fontSize: 12,
+            padding: "5px 10px",
+            background: "white",
+            border: "0.5px solid #D6E4C8",
+            borderRadius: 6,
+            color: "#3B6D11",
+            cursor: "pointer",
+            opacity: 0,
+            transition: "opacity 0.15s",
+          }}
+        >
+          수정
+        </button>
+      )}
+
       {/* 숙소 이미지 */}
       <div className={styles.imageWrap}>
         {firstImage ? (
@@ -72,8 +104,7 @@ export default function AccommodationCard({
         ) : (
           <div className={styles.imagePlaceholder}>이미지 없음</div>
         )}
-        {/* 상태 배지 */}
-        {accommodation.status === 'MAINTENANCE' && (
+        {accommodation.status === "MAINTENANCE" && (
           <span className={styles.badge}>점검 중</span>
         )}
       </div>
@@ -84,7 +115,6 @@ export default function AccommodationCard({
         <p className={styles.address}>{accommodation.address}</p>
         <p className={styles.description}>{accommodation.description}</p>
 
-        {/* 계산된 팀당 월세 */}
         <div className={styles.priceWrap}>
           {teamPrice > 0 ? (
             <>

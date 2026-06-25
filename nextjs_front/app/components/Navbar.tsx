@@ -31,10 +31,10 @@ import { UserResp } from '@/types/auth';
 
 
 export default function Navbar() {
-  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
+
   const [user, setUser] = useState<UserResp | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -46,19 +46,20 @@ export default function Navbar() {
     }
 
     api
-      .get<UserResp>('/api/users')
-      .then((data) => {
-        console.log('[Navbar] 로그인 유저:', data);
-        setIsAdmin(data.role === 'ADMIN');
-        setUser(data);
+      .get<UserResp>("/api/users")
+      .then((res) => {
+        setUser(res);
+        setIsAdmin(res.role === "ADMIN");
       })
       .catch(() => {
-        // 토큰 만료 등 → lib/api.ts가 자동으로 /login 리다이렉트 처리
+        // 비로그인 상태 등 - 로그인 안 한 것으로 처리, Navbar는 정상 노출
         setUser(null);
         setIsAdmin(false);
       })
-      .finally(() => setAuthLoading(false));
-  }, [pathname]);
+      .finally(() => {
+        setAuthLoading(false);
+      });
+  }, []);
 
   // 라우트 변경 시 메뉴 닫기
   useEffect(() => {
@@ -66,9 +67,11 @@ export default function Navbar() {
   }, [pathname]);
 
   const handleLogout = () => {
+    // TODO: tokenStorage의 삭제 메서드 이름이 clear()가 아니라면 여기 수정 필요
     tokenStorage.remove();
     setUser(null);
-    router.push('/');
+    setIsAdmin(false);
+    router.push("/");
   };
 
   return (
@@ -130,7 +133,6 @@ export default function Navbar() {
           {authLoading ? null : user ? (
             <>
               <span className={styles.navItem}>
-                {/* 임시 테스트용 */}
                 {user.nickname}님 환영합니다 (ID: {user.userId})
               </span>
               <button className={styles.navItem} onClick={handleLogout}>
