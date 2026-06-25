@@ -8,6 +8,4 @@ import java.util.Optional;
 public interface GuestChatRoomRepository extends JpaRepository<GuestChatRoom, Long> {
     // 특정 하우스 상품의 채팅방 찾기
     Optional<GuestChatRoom> findByHouseId(Long houseId);
-
-    Optional<GuestChatRoom> findByAccommodationId(Long accommodationId);
 }
