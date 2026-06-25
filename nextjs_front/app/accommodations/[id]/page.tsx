@@ -50,37 +50,44 @@ export default function AccommodationDetailPage() {
   useEffect(() => {
     if (!id) return;
 
+    // 숙소 + 스토리는 항상 조회 (비회원도 정상 표시)
     Promise.all([
       api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
       api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
-      api.get<SubscriptionsUserResp[]>(`/api/subscriptions/my/${userId}`),
     ])
-      .then(([accommodationData, storiesData, subscriptionData]) => {
+      .then(([accommodationData, storiesData]) => {
         setAccommodation(accommodationData);
         setStories(storiesData);
-
-        const matched = Array.isArray(subscriptionData)
-          ? subscriptionData.find((s) => s.accommodationId === Number(id))
-          : null;
-
-        if (!matched) {
-          setSubscriptionStatus("none");
-        } else if (matched.status === "PENDING") {
-          setSubscriptionStatus("waiting");
-        } else if (matched.status === "ACTIVE") {
-          setSubscriptionStatus("active");
-        } else if (matched.status === "EXPIRED") {
-          setSubscriptionStatus("expired");
-        } else {
-          setSubscriptionStatus("none");
-        }
       })
       .catch((err) => {
-        console.log("상세 페이지 데이터 조회 실패:", err);
+        console.log("숙소 데이터 조회 실패:", err);
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => setLoading(false));
+
+    // 구독 상태는 토큰이 있을 때만 별도 조회 — 실패해도 숙소 화면에 영향 없음
+    if (tokenStorage.get()) {
+      setAuthed(true);
+      api
+        .get<SubscriptionsUserResp[]>(`/api/subscriptions/my/${userId}`)
+        .then((subscriptionData) => {
+          const matched = Array.isArray(subscriptionData)
+            ? subscriptionData.find((s) => s.accommodationId === Number(id))
+            : null;
+
+          if (!matched) {
+            setSubscriptionStatus("none");
+          } else if (matched.status === "PENDING") {
+            setSubscriptionStatus("waiting");
+          } else if (matched.status === "ACTIVE") {
+            setSubscriptionStatus("active");
+          } else if (matched.status === "EXPIRED") {
+            setSubscriptionStatus("expired");
+          } else {
+            setSubscriptionStatus("none");
+          }
+        })
+        .catch(() => setSubscriptionStatus("none"));
+    }
   }, [id]);
 
   if (loading) return <div className={styles.loading}>불러오는 중...</div>;

@@ -16,6 +16,14 @@ public class CartController {
 
     private final CartService cartService;
 
+    // CartController.java에 추가
+    @GetMapping("/list")
+    public ResponseEntity<?> getCartList() {
+        // 1004L 사용자의 장바구니 목록을 가져오는 서비스 메서드 호출
+        var cartItems = cartService.getCartList(1004L);
+        return ResponseEntity.ok(cartItems);
+    }
+
     // 장바구니 추가
     @PostMapping("/add")
     public ResponseEntity<Map<String, String>> addToCart(@RequestBody CartRequestDto request) {
