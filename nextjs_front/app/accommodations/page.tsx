@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useMemo } from "react";
-import AccommodationCard from "./components/AccommodationCard";
-import PriceCalculator from "../components/PriceCalculator";
-import AccommodationFormModal from "./components/AccommodationFormModal";
-import { api } from "@/lib/api";
-import { UserResp } from "@/types/auth";
-import styles from "./page.module.css";
+import { useEffect, useState, useMemo } from 'react';
+import AccommodationCard from './components/AccommodationCard';
+import PriceCalculator from '../components/PriceCalculator';
+import AccommodationFormModal from './components/AccommodationFormModal';
+import { api } from '@/lib/api';
+import { UserResp } from '@/types/auth';
+import styles from './page.module.css';
 
 export interface StayAccommodationPriceDto {
   id: number;
@@ -31,7 +31,7 @@ export interface StayAccommodationDto {
   buildingArea: number;
   latitude: number;
   longitude: number;
-  status: "AVAILABLE" | "MAINTENANCE";
+  status: 'AVAILABLE' | 'MAINTENANCE';
   prices: StayAccommodationPriceDto[];
 }
 
@@ -46,15 +46,15 @@ const PAGE_SIZE = 6;
 
 export default function AccommodationsPage() {
   const [currentPage, setCurrentPage] = useState(0);
-  const [keyword, setKeyword] = useState("");
-  const [inputValue, setInputValue] = useState("");
+  const [keyword, setKeyword] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // 등록/수정 모달 상태
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editTarget, setEditTarget] = useState<StayAccommodationDto | null>(
-    null,
+    null
   );
 
   const [teams, setTeams] = useState(1);
@@ -70,7 +70,7 @@ export default function AccommodationsPage() {
   // 이번 렌더링에서 "있어야 할" 요청을 식별하는 키 (순수 함수만 사용)
   const requestId = useMemo(
     () => `${currentPage}::${keyword}::${refreshKey}`,
-    [currentPage, keyword, refreshKey],
+    [currentPage, keyword, refreshKey]
   );
 
   // loading은 별도 state가 아니라 파생값
@@ -83,10 +83,10 @@ export default function AccommodationsPage() {
       page: String(currentPage),
       size: String(PAGE_SIZE),
     });
-    if (keyword) params.set("keyword", keyword);
+    if (keyword) params.set('keyword', keyword);
 
     fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations?${params}`,
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stay/accommodations?${params}`
     )
       .then((res) => res.json())
       .then((data: PageResponse<StayAccommodationDto>) => {
@@ -98,7 +98,7 @@ export default function AccommodationsPage() {
         });
       })
       .catch((err) => {
-        if (!ignore) console.log("숙소 목록 조회 실패:", err);
+        if (!ignore) console.log('숙소 목록 조회 실패:', err);
       });
 
     return () => {
@@ -110,8 +110,8 @@ export default function AccommodationsPage() {
   // admin 여부 확인 (비로그인/일반 유저는 false 유지, 화면은 정상 노출)
   useEffect(() => {
     api
-      .get<UserResp>("/api/users")
-      .then((user) => setIsAdmin(user.role === "ADMIN"))
+      .get<UserResp>('/api/users')
+      .then((user) => setIsAdmin(user.role === 'ADMIN'))
       .catch(() => setIsAdmin(false));
   }, []);
 
@@ -124,7 +124,7 @@ export default function AccommodationsPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handleSearch();
+    if (e.key === 'Enter') handleSearch();
   };
 
   return (
@@ -151,9 +151,9 @@ export default function AccommodationsPage() {
             <button
               className={styles.clearBtn}
               onClick={() => {
-                setInputValue("");
+                setInputValue('');
                 setCurrentPage(0);
-                setKeyword("");
+                setKeyword('');
               }}
             >
               ✕
@@ -170,7 +170,7 @@ export default function AccommodationsPage() {
         {isAdmin && (
           <button
             className="btn-primary"
-            style={{ marginLeft: 8 }}
+            style={{ marginLeft: 8, flex: 1 }}
             onClick={() => setShowCreateModal(true)}
           >
             + 숙소 등록
@@ -203,7 +203,7 @@ export default function AccommodationsPage() {
           const end = Math.min(totalPages - 1, Math.max(currentPage + 2, 4));
           const pages = Array.from(
             { length: end - start + 1 },
-            (_, i) => start + i,
+            (_, i) => start + i
           );
           return (
             <div className={styles.pagination}>
@@ -217,7 +217,7 @@ export default function AccommodationsPage() {
               {pages.map((i) => (
                 <button
                   key={i}
-                  className={`${styles.pageBtn} ${i === currentPage ? styles.pageBtnActive : ""}`}
+                  className={`${styles.pageBtn} ${i === currentPage ? styles.pageBtnActive : ''}`}
                   onClick={() => setCurrentPage(i)}
                 >
                   {i + 1}

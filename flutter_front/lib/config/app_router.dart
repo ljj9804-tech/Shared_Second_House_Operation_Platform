@@ -23,7 +23,9 @@ import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart'
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_subscription_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_screen.dart';
+import 'package:flutter_front/domain/view/live_route_map_screen.dart';
 import 'package:flutter_front/features/auth/provider/google_signin_provider.dart';
+
 
 
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
