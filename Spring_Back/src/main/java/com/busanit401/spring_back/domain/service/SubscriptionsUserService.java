@@ -32,6 +32,7 @@ public class SubscriptionsUserService {
     private final SubscriptionsUserRepository subscriptionsUserRepository;
     private final UserRepository userRepository;
     private final WaitingSubscriptionUserRepository waitingSubscriptionUserRepository;
+    private final GuestChatService guestChatService;
 
 
     // 관리자 - 구독 승인
@@ -54,6 +55,14 @@ public class SubscriptionsUserService {
 
         subscriptionsUser.approve();
         log.info("[구독 승인] subscriptionId: {}", subscriptionId);
+
+        // 게스트 채팅 연동을 위한 로직 추가 ================================================
+        guestChatService.getOrCreateChatRoom(
+                subscriptionsUser.getAccommodationId(),
+                subscriptionsUser.getAccommodationId() + "번 하우스"
+        );
+        // 게스트 채팅 연동을 위한 로직 추가 ================================================
+
         return SubscriptionsUserResp.from(subscriptionsUser);
     }
 
