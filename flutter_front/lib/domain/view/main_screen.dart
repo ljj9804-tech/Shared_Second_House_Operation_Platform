@@ -41,8 +41,6 @@ import 'package:flutter_front/domain/dto/stay_reservation_dto.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
-import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
-import 'package:flutter_front/domain/view/guest_chat_bot_screen.dart';
 // TODO: [개발 완료 시 삭제]
 import 'package:flutter_front/domain/view/dev_screen_links.dart';
 
@@ -243,8 +241,8 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: [
           _buildHomeScaffold(ctrl),
-          const StayMyReservationScreen(),
-          const GuestChatBotScreen(),
+          _buildDeliveryScaffold(),
+          _buildMyPageScaffold(), // TODO: 담당 멤버 화면으로 교체
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -262,19 +260,63 @@ class _MainScreenState extends State<MainScreen> {
             label: '홈',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: '내 예약',
+            icon: Icon(Icons.delivery_dining),
+            activeIcon: Icon(Icons.delivery_dining),
+            label: '배달',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.smart_toy_outlined),
-            activeIcon: Icon(Icons.smart_toy),
-            label: 'AI 챗봇',
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: '내 정보',
           ),
         ],
       ),
     );
   }
+
+  // TODO: 내 정보 담당 멤버가 이 메서드를 자신의 화면으로 교체
+  Widget _buildMyPageScaffold() => Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      title: const Text('내 정보', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+      centerTitle: true,
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+    ),
+    body: const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.person_outline, size: 56, color: AppColors.textHint),
+          SizedBox(height: 16),
+          Text('마이페이지 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+        ],
+      ),
+    ),
+  );
+
+  // TODO: 배달 팀원이 이 메서드를 자신의 화면으로 교체
+  Widget _buildDeliveryScaffold() => Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      title: const Text('배달', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+      centerTitle: true,
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+    ),
+    body: const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.delivery_dining, size: 56, color: AppColors.textHint),
+          SizedBox(height: 16),
+          Text('배달 서비스 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildHomeScaffold(StayAccommodationController ctrl) {
     return Scaffold(
