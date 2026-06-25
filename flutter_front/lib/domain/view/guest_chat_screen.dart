@@ -36,46 +36,42 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
   }
 
   Future<void> _initChatRoomSequence() async {
-    List<Map<String, dynamic>> history = await _chatService.getChatHistory(widget.chatRoomId);
+    try {
+      // 1. 과거 대화 내역 조회 (Next.js의 history API 페칭과 동일)
+      List<Map<String, dynamic>> history = await _chatService.getChatHistory(widget.chatRoomId);
 
-    if (mounted) {
-      setState(() {
-        _messages.addAll(history);
-        _isLoading = false;
-      });
-      _scrollToBottom();
-    }
-
-    _chatService.connectWebSocket(
-      chatRoomId: widget.chatRoomId,
-      onMessageReceived: (Map<String, dynamic> incomingMessage) {
-        if (!mounted) return;
-
-        // // 🟩 [주석 처리 반영] 현재는 일반 대화(TALK)만 처리하므로 분기 로직은 백업 주석화
-        // final String type = incomingMessage['type'] ?? 'TALK';
-        // // final int targetChatId = incomingMessage['chatId'] ?? 0;
-        //
-        // setState(() {
-        //   if (type == 'TALK') {
-        //     // 일반 대화는 리스트에 순수 추가
-        //     _messages.add(incomingMessage);
-        //   }
-        //   /* [일정 단축으로 인한 수정/삭제 기능 일시 주석 처리]
-        //   else if (type == 'EDIT') {
-        //     final index = _messages.indexWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
-        //     if (index != -1) {
-        //       _messages[index]['content'] = incomingMessage['content'];
-        //       _messages[index]['messageContent'] = incomingMessage['content'];
-        //     }
-        //   }
-        //   else if (type == 'DELETE') {
-        //     _messages.removeWhere((m) => (m['chatId'] ?? m['id']) == targetChatId);
-        //   }
-        //   */
-        // });
+      if (mounted) {
+        setState(() {
+          _messages.addAll(history);
+          _isLoading = false;
+        });
         _scrollToBottom();
-      },
-    );
+      }
+
+      // 2. 웹소켓 실시간 구독 시작 (토큰 연동이 서비스 내부에서 처리되는지 확인 필요)
+      _chatService.connectWebSocket(
+        chatRoomId: widget.chatRoomId,
+        onMessageReceived: (Map<String, dynamic> incomingMessage) {
+          if (!mounted) return;
+
+          // 🟩 [수정] 실시간으로 수신된 메시지를 리스트에 반영하도록 setState 추가
+          setState(() {
+            _messages.add(incomingMessage);
+          });
+          _scrollToBottom();
+        },
+      );
+    } catch (e) {
+      // 에러 핸들링 추가 (네트워크나 인증 에러 발생 시 익명 튕김 방지용 상태 제어)
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('채팅방을 불러오는 중 오류가 발생했습니다: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -110,83 +106,6 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
     }
   }
 
-  /* [일정 단축으로 인한 수정/삭제 모달 및 익스텐션 UI 관련 메서드 전체 주석 처리]
-  void _showChatOptions(BuildContext context, Map<String, dynamic> chat) {
-    final int messageId = chat['chatId'] ?? chat['id'] ?? 0;
-    final String currentText = chat['content'] ?? chat['messageContent'] ?? '';
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit, color: primaryNavy),
-                title: const Text('메시지 수정'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showEditDialog(messageId, currentText);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: const Text('메시지 삭제', style: TextStyle(color: Colors.redAccent)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _processDeleteMessage(messageId);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showEditDialog(int messageId, String oldText) {
-    final textController = TextEditingController(text: oldText);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('메시지 수정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: textController,
-          decoration: const InputDecoration(hintText: "수정할 내용을 입력하세요"),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소')),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _processEditMessage(messageId, textController.text.trim());
-            },
-            child: const Text('수정', style: TextStyle(color: primaryNavy)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _processEditMessage(int messageId, String newContent) {
-    if (newContent.isEmpty) return;
-    // _chatService.editMessage(
-    //   chatId: messageId,
-    //   chatRoomId: widget.chatRoomId,
-    //   newContent: newContent,
-    // );
-  }
-
-  void _processDeleteMessage(int messageId) {
-    // _chatService.deleteMessage(
-    //   chatId: messageId,
-    //   chatRoomId: widget.chatRoomId,
-    // );
-  }
-  */
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 150), () {
