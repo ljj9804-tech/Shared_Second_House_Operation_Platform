@@ -58,6 +58,8 @@ public class GuestChatService {
     // 실시간으로 수신된 메시지 DB 저장
     @Transactional
     public GuestChatMessage saveMessage(Long chatRoomId, Long senderId, String senderName, String content) {
+        log.info("💾 DB 저장 시도 -> room: {}, senderId: {}, name: {}, content: {}",
+                chatRoomId, senderId, senderName, content);
         GuestChatRoom chatRoom = guestChatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게스트 채팅방입니다. ID: " + chatRoomId));
 
