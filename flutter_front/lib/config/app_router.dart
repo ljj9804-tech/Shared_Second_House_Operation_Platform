@@ -11,6 +11,7 @@ import 'package:flutter_front/features/auth/provider/auth_provider.dart'; // 추
 import 'package:flutter_front/features/auth/screen/auth_gate.dart';        // 추가
 import 'package:flutter_front/features/auth/screen/login_screen.dart';    // 추가
 import 'package:flutter_front/features/auth/screen/signup_screen.dart';   // 추가
+import 'package:flutter_front/features/auth/provider/signup_provider.dart';
 
 // [화면 Import]
 import 'package:flutter_front/domain/view/main_screen.dart';
@@ -19,6 +20,8 @@ import 'package:flutter_front/domain/view/stay_accommodation_detail_screen.dart'
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_screen.dart';
+import 'package:flutter_front/features/auth/provider/google_signin_provider.dart';
+
 
 final RouteObserver<ModalRoute> routeObserver = RouteObserver<ModalRoute>();
 
@@ -35,6 +38,10 @@ class AppRouter extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatBotController()),
         ChangeNotifierProvider(create: (_) => RestaurantController()),
         ChangeNotifierProvider(create: (_) => RouteController()),
+        ChangeNotifierProvider(create: (_) => SignupProvider()),
+        ChangeNotifierProvider(create: (_) => GoogleSignInProvider())
+
+
       ],
       child: MaterialApp(
         title: '세컨하우스',

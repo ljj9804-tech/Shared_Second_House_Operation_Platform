@@ -148,6 +148,15 @@ public class UserController {
     }
 
     /**
+     * 이메일로 가입 여부 확인 (소셜 로그인 신규/기존 분기용)
+     */
+    @GetMapping("/exists")
+    public ResponseEntity<?> checkEmailExists(@RequestParam String email) {
+        boolean exists = userService.existsByEmail(email);
+        return ResponseEntity.ok(Map.of("exists", exists));
+    }
+
+    /**
      * refreshToken 갱신
      */
     @PostMapping("/refresh-token")
@@ -178,7 +187,7 @@ public class UserController {
 
     private ResponseEntity<?> handleSocialLogin(UserInfo userInfo, HttpServletResponse response) {
         try {
-            CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(userInfo.getEmail());
+            CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(userInfo.getUsername());
             User user = userDetails.getUser();
 
             if (user.getRole() == Role.SOCIAL) {
