@@ -2,9 +2,11 @@ package com.busanit401.spring_back.controller;
 
 import com.busanit401.spring_back.domain.service.TourService;
 import com.busanit401.spring_back.dto.TourDto;
-import io.jsonwebtoken.lang.Collections;
+import com.busanit401.spring_back.dto.TourResponseListDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,53 +14,55 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController // JSON 형태로 데이터를 반환하는 REST API 컨트롤러 선언
-@RequestMapping("/api/tours") // 이 컨트롤러의 모든 API 기본 주소 경로 설정
+@RequestMapping("/api/tours") // 이 컨트롤러의 모든 API 기본 주소 경로 설정 (/api/tours)
 @RequiredArgsConstructor
 public class TourController {
 
     private final TourService tourService;
 
-    // 파싱 편의를 위해 매개변수를 bodyMap으로 변경
-    @SuppressWarnings("unchecked")
-    private List<TourDto> parseTourDtoList(Map<String, Object> bodyMap) {
-        try {
-            if (bodyMap.get("items") == null || "".equals(bodyMap.get("items"))) {
-                return Collections.emptyList();
-            }
+    /**
+     * 💡 Next.js 프런트엔드 규격에 맞춰 마지막 페이지 여부(isLast)와 데이터(tours)를 응답할 객체
+     */
+    @Getter
+    @AllArgsConstructor
+    public static class TourServerResponse {
+        private List<TourDto> tours;
+        private boolean isLast;
+    }
 
-            Map<String, Object> itemsMap = (Map<String, Object>) bodyMap.get("items");
-            Object itemObject = itemsMap.get("item");
-            if (itemObject == null) return Collections.emptyList();
+    /**
+     * 특정 지역 코드 기반으로 관광지 리스트를 페이징 조회하는 API Endpoint
+     * URL: GET http://localhost:8080/api/tours?lDongRegnCd=26&pageNo=1
+     */
+    @GetMapping
+    @Operation(summary = "관광지 리스트 조회", description = "지역 코드와 페이지 번호를 받아 관광지 목록과 마지막 페이지 여부를 반환합니다.")
+    public ResponseEntity<TourServerResponse> getTourList(
+            @Parameter(description = "법정동 시도 코드 (예: 부산=26)") @RequestParam("lDongRegnCd") String lDongRegnCd,
+            @Parameter(description = "조회할 페이지 번호") @RequestParam(value = "pageNo", defaultValue = "1") int pageNo) {
 
-            List<Map<String, Object>> itemList = new ArrayList<>();
+        // 1. 서비스로부터 이미 완성된 TourResponseListDto 객체를 받아옵니다.
+        TourResponseListDto result = tourService.getTourListByRegion(lDongRegnCd, pageNo);
 
-            if (itemObject instanceof List) {
-                itemList = (List<Map<String, Object>>) itemObject;
-            } else if (itemObject instanceof Map) {
-                itemList.add((Map<String, Object>) itemObject);
-            }
-
-            return itemList.stream()
-                    .map(item -> new TourDto(
-                            item.get("title") != null ? String.valueOf(item.get("title")) : "정보 없음",
-                            item.get("firstimage") != null ? String.valueOf(item.get("firstimage")) : "",
-                            item.get("addr1") != null ? String.valueOf(item.get("addr1")) : "주소 정보 없음",
-                            item.get("contentid") != null ? String.valueOf(item.get("contentid")) : ""
-                            // 💡 외부 아이템에는 isLast가 없으므로 여기서 매핑하지 않음
-                    ))
-                    .collect(Collectors.toList());
-
-        } catch (Exception e) {
-            System.err.println("▶ [JSON 파싱 중 에러 발생] 사유: " + e.getMessage());
-            e.printStackTrace();
-            return Collections.emptyList();
+        // 안전장치: 결과 객체 자체가 null일 경우 즉시 빈 배열과 마지막 페이지 표시(true) 반환
+        if (result == null) {
+            return ResponseEntity.ok(new TourServerResponse(Collections.emptyList(), true));
         }
+
+        // 2. DTO 내부에 담긴 순수 관광지 리스트(tours) 추출
+        List<TourDto> tours = result.getTours();
+        if (tours == null) {
+            tours = Collections.emptyList();
+        }
+
+        // 3. 🛠️ 오류 수정: 서비스가 이미 계산해 둔 isLast 값을 그대로 가져옵니다.
+        boolean isLast = result.isLast();
+
+        // 4. Next.js가 스크롤을 제어할 수 있도록 최적화된 구조로 포장하여 반환
+        return ResponseEntity.ok(new TourServerResponse(tours, isLast));
     }
 }
 
