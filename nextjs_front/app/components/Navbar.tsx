@@ -26,25 +26,35 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-    const token = tokenStorage.get();
-    if (!token) {
-      Promise.resolve().then(() => setAuthLoading(false));
-      return;
-    }
-
-    api
-      .get<UserResp>("/api/users")
-      .then((res) => {
-        setUser(res);
-        setIsAdmin(res.role === "ADMIN");
-      })
-      .catch(() => {
+    const checkAuth = () => {
+      const token = tokenStorage.get();
+      if (!token) {
         setUser(null);
         setIsAdmin(false);
-      })
-      .finally(() => {
         setAuthLoading(false);
-      });
+        return;
+      }
+
+      setAuthLoading(true);
+      api
+        .get<UserResp>("/api/users")
+        .then((res) => {
+          setUser(res);
+          setIsAdmin(res.role === "ADMIN");
+        })
+        .catch(() => {
+          setUser(null);
+          setIsAdmin(false);
+        })
+        .finally(() => {
+          setAuthLoading(false);
+        });
+    };
+
+    checkAuth();
+
+    window.addEventListener("auth-change", checkAuth);
+    return () => window.removeEventListener("auth-change", checkAuth);
   }, []);
 
   const handleLogout = () => {
@@ -75,14 +85,8 @@ export default function Navbar() {
             <Link href="/accommodations" className={styles.navItem}>
               숙소 목록
             </Link>
-            <Link href="/my/reservations" className={styles.navItem}>
-              내 예약
-            </Link>
             <Link href="/product" className={styles.navItem}>
-              상품 스토어
-            </Link>
-            <Link href="/cart" className={styles.navItem}>
-              장바구니
+              배달
             </Link>
             <Link href="/tours" className={styles.navItem}>
               관광지

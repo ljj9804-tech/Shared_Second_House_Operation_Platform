@@ -81,6 +81,11 @@ public class SecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session            // 추가 — JWT는 무상태여야 함
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .formLogin(AbstractHttpConfigurer::disable)        // 추가 — 기본 로그인 폼/리다이렉트 비활성화
+                .httpBasic(AbstractHttpConfigurer::disable)        // 추가 — 기본 인증 팝업 비활성화
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

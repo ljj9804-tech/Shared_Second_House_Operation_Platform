@@ -8,6 +8,7 @@ import { StayAccommodationDto, StayAccommodationPriceDto } from "../page";
 import { api } from "@/lib/api";
 import { tokenStorage } from "@/lib/token";
 import { UserResp } from "@/types/auth";
+import { SubscriptionsUserResp } from "@/types/subscription";
 import { MONTH_OPTIONS, TEAM_OPTIONS } from "@/app/lib/constants";
 import { calcTeamPrice } from "@/app/lib/priceUtils";
 import ImageSlider from "./components/ImageSlider";
@@ -16,6 +17,7 @@ import HouseStructure from "./components/HouseStructure";
 import AmenityGrid from "./components/AmenityGrid";
 import StorySection from "./components/StorySection";
 import LocationMap from "./components/LocationMap";
+import { TEMP_USER_ID } from "@/app/lib/auth";
 
 export interface StayStoryDto {
   id: number;
@@ -26,12 +28,6 @@ export interface StayStoryDto {
 }
 
 type SubscriptionStatus = "none" | "waiting" | "active" | "expired";
-
-interface SubscriptionItemDto {
-  accommodationId: number;
-  status: string;
-}
-
 
 export default function AccommodationDetailPage() {
   const params = useParams();
@@ -44,7 +40,6 @@ export default function AccommodationDetailPage() {
   const [subscriptionStatus, setSubscriptionStatus] =
     useState<SubscriptionStatus>("none");
   const [loading, setLoading] = useState(true);
-  // 서버가 인정한 유효 로그인 여부 (/api/users 성공 시 true) — LocationMap 지도 노출/과금 게이트
   const [authed, setAuthed] = useState(false);
 
   const [teams, setTeams] = useState(1);
@@ -56,19 +51,16 @@ export default function AccommodationDetailPage() {
     if (!id) return;
 
     Promise.all([
-      api.get(`/api/stay/accommodations/${id}`).then((r) => r.data),
-      api.get(`/api/stay/stories/${id}`).then((r) => r.data),
-      api.get(`/api/subscriptions/my/${userId}`).then((r) => r.data),
+      api.get<StayAccommodationDto>(`/api/stay/accommodations/${id}`),
+      api.get<StayStoryDto[]>(`/api/stay/stories/${id}`),
+      api.get<SubscriptionsUserResp[]>(`/api/subscriptions/my/${userId}`),
     ])
       .then(([accommodationData, storiesData, subscriptionData]) => {
         setAccommodation(accommodationData);
         setStories(storiesData);
 
         const matched = Array.isArray(subscriptionData)
-          ? subscriptionData.find(
-              (s: { accommodationId: number }) =>
-                s.accommodationId === Number(id),
-            )
+          ? subscriptionData.find((s) => s.accommodationId === Number(id))
           : null;
 
         if (!matched) {
@@ -123,6 +115,8 @@ export default function AccommodationDetailPage() {
             accommodationId={accommodation.id}
             latitude={accommodation.latitude}
             longitude={accommodation.longitude}
+            address={accommodation.address}
+            showMap={true}
           />
 
           <HouseStructure
