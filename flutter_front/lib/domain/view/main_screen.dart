@@ -2,7 +2,7 @@
  * ==================================================================================
  * [파일 정보]
  * 위치  : lib/domain/view/main_screen.dart
- * 역할  : 앱 메인 화면 — 홈 탭 / 내 예약 탭 / AI 챗봇 탭을 IndexedStack으로 관리
+ * 역할  : 앱 메인 화면 — 홈 탭 / 내 예약 탭 / AI 챗봇 탭 / 마이페이지 탭을 IndexedStack으로 관리
  * 사용처 : app_router.dart → '/' 루트
  * ----------------------------------------------------------------------------------
  * [연관 파일]
@@ -11,6 +11,7 @@
  * - stay_reservation_calendar_screen.dart : 구독 카드 "예약하기" 탭 시 이동
  * - stay_my_reservation_screen.dart       : BottomNavigationBar [내 예약] 탭
  * - guest_chat_bot_screen.dart            : BottomNavigationBar [AI 챗봇] 탭
+ * - mypage_screen.dart                    : BottomNavigationBar [마이페이지] 탭
  * ----------------------------------------------------------------------------------
  * [홈 탭 구성]
  * ① 내 구독 숙소 섹션
@@ -43,6 +44,7 @@ import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_bot_screen.dart';
+import 'package:flutter_front/features/mypage/screen/mypage_screen.dart'; // 추가
 // TODO: [개발 완료 시 삭제]
 import 'package:flutter_front/domain/view/dev_screen_links.dart';
 
@@ -218,6 +220,7 @@ class _MainScreenState extends State<MainScreen> {
           _buildHomeScaffold(ctrl),
           const StayMyReservationScreen(),
           const GuestChatBotScreen(),
+          const MyPageScreen(), // 추가
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -243,6 +246,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.smart_toy_outlined),
             activeIcon: Icon(Icons.smart_toy),
             label: 'AI 챗봇',
+          ),
+          BottomNavigationBarItem( // 추가
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: '마이페이지',
           ),
         ],
       ),
@@ -271,8 +279,8 @@ class _MainScreenState extends State<MainScreen> {
       body: ctrl.isLoadingList
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : ctrl.errorMessage != null
-              ? Center(child: Text(ctrl.errorMessage!, style: const TextStyle(color: AppColors.danger)))
-              : _buildBody(ctrl),
+          ? Center(child: Text(ctrl.errorMessage!, style: const TextStyle(color: AppColors.danger)))
+          : _buildBody(ctrl),
     );
   }
 
@@ -408,7 +416,7 @@ class _MainScreenState extends State<MainScreen> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               child: item.firstImageUrl != null
                   ? Image.network(item.firstImageUrl!, height: fullWidth ? 180 : 130, width: double.infinity, fit: BoxFit.cover,
-                      errorBuilder: (context, error, stack) => _imagePlaceholder(height: fullWidth ? 180 : 130))
+                  errorBuilder: (context, error, stack) => _imagePlaceholder(height: fullWidth ? 180 : 130))
                   : _imagePlaceholder(height: fullWidth ? 180 : 130),
             ),
             Padding(
@@ -490,7 +498,7 @@ class _MainScreenState extends State<MainScreen> {
                 children: [
                   item.firstImageUrl != null
                       ? Image.network(item.firstImageUrl!, height: 130, width: double.infinity, fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _imagePlaceholder())
+                      errorBuilder: (context, error, stackTrace) => _imagePlaceholder())
                       : _imagePlaceholder(),
                   Positioned(
                     left: 10, bottom: 8,
