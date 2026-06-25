@@ -11,9 +11,11 @@ class ProductListScreen extends StatefulWidget {
 class _ProductListScreenState extends State<ProductListScreen> {
   // 실제 API 연동 시 Controller의 데이터를 사용하세요.
   final List<Map<String, dynamic>> products = [
-    {"id": 1, "name": "프리미엄 한우 바비큐", "price": 85000, "img": "beef.jpg"},
-    {"id": 2, "name": "산들바람 샐러드 밀키트", "price": 15000, "img": "salad.jpg"},
-    {"id": 3, "name": "제주 감귤 주스 세트", "price": 12000, "img": "juice.jpg"},
+    {"id": 1, "name": "[추천] 오션뷰 세컨하우스 1박 이용권", "price": 150000, "img": "beer.jpg"},
+    {"id": 2, "name": "[조식] 수제 샌드위치 & 커피 세트", "price": 12000, "img": "salad.jpg"},
+    {"id": 3, "name": "[시그니처] 대나무 바베큐 플래터", "price": 45000, "img": "juice.jpg"},
+    {"id": 4, "name": "[가정간편식] 얼큰 차돌된장찌개", "price": 18000, "img": "stew.jpg"},
+    {"id": 5, "name": "콜라 / 사이다 500ml캔", "price": 2500, "img": "drink.jpg"},
   ];
 
   @override
