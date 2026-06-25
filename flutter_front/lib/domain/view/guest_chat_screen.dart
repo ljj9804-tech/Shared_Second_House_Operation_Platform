@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_front/core/theme/app_colors.dart'; // 🟩 공통 컬러 임포트 경로 확인
+import 'package:flutter_front/common/constants/app_colors.dart'; // 🟩 공통 컬러 임포트 경로 확인
 import 'package:flutter_front/domain/service/guest_chat_service.dart';
 
 class GuestChatScreen extends StatefulWidget {
@@ -121,7 +121,7 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
         title: Text(
           '${widget.chatRoomId}번 채팅방',
           style: const TextStyle(
-            color: AppColors.surfaceVariant,
+            color: AppColors.primaryLight,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -193,7 +193,7 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
                               ),
                               decoration: BoxDecoration(
                                 // 🟩 [서식 반영] 내가 보낸 말풍선은 연한 그린(surfaceVariant 계열), 상대방은 깨끗한 흰색(surface) 지정
-                                color: isMe ? AppColors.surfaceVariant : AppColors.surface,
+                                color: isMe ? AppColors.border : AppColors.border,
                                 borderRadius: BorderRadius.only(
                                   topLeft: const Radius.circular(12),
                                   topRight: const Radius.circular(12),
@@ -234,7 +234,7 @@ class _GuestChatScreenState extends State<GuestChatScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.surface, // 공통 흰색 바탕
+                color: AppColors.primaryLight, // 공통 흰색 바탕
                 border: const Border(
                   top: BorderSide(color: AppColors.border, width: 0.5), // 세련된 한 줄 분할선
                 ),
