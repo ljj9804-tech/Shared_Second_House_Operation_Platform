@@ -18,17 +18,17 @@
  * - 로그아웃 시 토큰 삭제 후 홈으로 이동
  * ==================================================================================
  */
-"use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import styles from "./Navbar.module.css";
-import { api } from "@/lib/api";
-import { tokenStorage } from "@/lib/token";
-import { UserResp } from "@/types/auth";
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import styles from './Navbar.module.css';
+import { tokenStorage } from '@/lib/token';
+import { api } from '@/lib/api';
+import { UserResp } from '@/types/auth';
+
 
 export default function Navbar() {
   const router = useRouter();
@@ -36,12 +36,12 @@ export default function Navbar() {
   const [user, setUser] = useState<UserResp | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const token = tokenStorage.get();
     if (!token) {
-      setUser(null);
-      setAuthLoading(false);
+      Promise.resolve().then(() => setAuthLoading(false));
       return;
     }
 
@@ -61,6 +61,11 @@ export default function Navbar() {
       });
   }, []);
 
+  // 라우트 변경 시 메뉴 닫기
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   const handleLogout = () => {
     // TODO: tokenStorage의 삭제 메서드 이름이 clear()가 아니라면 여기 수정 필요
     tokenStorage.remove();
@@ -70,15 +75,26 @@ export default function Navbar() {
   };
 
   return (
-    <header className={styles.header}>
-      <div className={styles.headerInner}>
-        <Link href="/" className={styles.logo}>
-          세컨하우스
-        </Link>
-        <nav className={styles.nav}>
-          <Link href="/" className={styles.navItem}>
-            홈
+    <>
+      {isMenuOpen && (
+        <div className={styles.overlay} onClick={() => setIsMenuOpen(false)} />
+      )}
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link href="/" className={styles.logo}>
+            세컨하우스
           </Link>
+          <button
+            className={styles.hamburger}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            aria-label="메뉴"
+          >
+            {isMenuOpen ? '✕' : '☰'}
+          </button>
+          <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
+          {/* <Link href="/" className={styles.navItem}>
+            홈
+          </Link> */}
           <Link href="/accommodations" className={styles.navItem}>
             숙소 목록
           </Link>
@@ -108,7 +124,7 @@ export default function Navbar() {
             <Link
               href="/delivery"
               className={styles.navItem}
-              style={{ color: "orange", fontWeight: "bold" }}
+              style={{ color: 'orange', fontWeight: 'bold' }}
             >
               배달 관리 ★
             </Link>
@@ -128,8 +144,9 @@ export default function Navbar() {
               로그인
             </Link>
           )}
-        </nav>
-      </div>
-    </header>
+          </nav>
+        </div>
+      </header>
+    </>
   );
 }
