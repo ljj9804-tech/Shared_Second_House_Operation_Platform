@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -122,9 +123,12 @@ public class SubscriptionsUserService {
                         .distinct()
                         .collect(Collectors.toList());
 
-        // 합치고 중복 제거 후 반환
-        return java.util.stream.Stream.concat(leaderSubscriptions.stream(), memberSubscriptions.stream())
+        // 합치고 중복 제거 후 정렬(ACTIVE→PENDING→EXPIRED/CANCELLED, 같은 상태면 최신 시작일 먼저) 후 반환
+        return Stream.concat(leaderSubscriptions.stream(), memberSubscriptions.stream())
                 .distinct()
+                .sorted(Comparator
+                        .comparingInt((SubscriptionsUser s) -> statusSortOrder(s.getStatus()))
+                        .thenComparing(Comparator.comparing(SubscriptionsUser::getStartDate).reversed()))
                 .map(SubscriptionsUserResp::from)
                 .collect(Collectors.toList());
     }
@@ -158,6 +162,16 @@ public class SubscriptionsUserService {
     // -----------------------------------------------
     // Private 메서드
     // -----------------------------------------------
+
+    // [정렬] 구독 상태 정렬 우선순위 — ACTIVE(0) → PENDING(1) → EXPIRED/CANCELLED(2)
+    private int statusSortOrder(SubscriptionStatus status) {
+        return switch (status) {
+            case ACTIVE    -> 0;
+            case PENDING   -> 1;
+            case EXPIRED   -> 2;
+            case CANCELLED -> 2;
+        };
+    }
 
     // 구독 조회
     private SubscriptionsUser findSubscription(Long subscriptionId) {
