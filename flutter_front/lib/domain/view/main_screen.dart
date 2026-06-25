@@ -245,8 +245,8 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: [
           _buildHomeScaffold(ctrl),
-          const StayMyReservationScreen(),
-          const GuestChatBotScreen(),
+          _buildDeliveryScaffold(),
+          // const GuestChatBotScreen(),
           const MyPageScreen(), // 추가
         ],
       ),
@@ -269,11 +269,11 @@ class _MainScreenState extends State<MainScreen> {
             activeIcon: Icon(Icons.delivery_dining),
             label: '배달',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: '내 정보',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.person_outline),
+          //   activeIcon: Icon(Icons.person),
+          //   label: '내 정보',
+          // ),
           BottomNavigationBarItem( // 추가
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
@@ -285,26 +285,26 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   // TODO: 내 정보 담당 멤버가 이 메서드를 자신의 화면으로 교체
-  Widget _buildMyPageScaffold() => Scaffold(
-    backgroundColor: AppColors.background,
-    appBar: AppBar(
-      title: const Text('내 정보', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-      centerTitle: true,
-      backgroundColor: AppColors.primary,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-    ),
-    body: const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.person_outline, size: 56, color: AppColors.textHint),
-          SizedBox(height: 16),
-          Text('마이페이지 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
-        ],
-      ),
-    ),
-  );
+  // Widget _buildMyPageScaffold() => Scaffold(
+  //   backgroundColor: AppColors.background,
+  //   appBar: AppBar(
+  //     title: const Text('내 정보', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+  //     centerTitle: true,
+  //     backgroundColor: AppColors.primary,
+  //     elevation: 0,
+  //     automaticallyImplyLeading: false,
+  //   ),
+  //   body: const Center(
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Icon(Icons.person_outline, size: 56, color: AppColors.textHint),
+  //         SizedBox(height: 16),
+  //         Text('마이페이지 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+  //       ],
+  //     ),
+  //   ),
+  // );
 
   // TODO: 배달 팀원이 이 메서드를 자신의 화면으로 교체
   Widget _buildDeliveryScaffold() => Scaffold(

@@ -321,6 +321,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
               const SizedBox(height: 24),
               _menuTile('정보 수정', Icons.edit_outlined, _showEditInfoSheet),
               _menuTile('비밀번호 변경', Icons.lock_outline, _showChangePasswordSheet),
+              // 내 예약 추가
+              _menuTile('내 예약', Icons.calendar_today_outlined,
+                      () => Navigator.pushNamed(context, '/my/reservations')),
+              // 내 구독 추가
+              _menuTile('내 구독', Icons.home_outlined,
+                      () => Navigator.pushNamed(context, '/my/subscriptions')),
               _menuTile('로그아웃', Icons.logout, _handleLogout),
               const SizedBox(height: 24),
               Center(
