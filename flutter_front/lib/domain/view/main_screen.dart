@@ -366,9 +366,30 @@ class _MainScreenState extends State<MainScreen> {
 
           // 내 구독 숙소 섹션 (ACTIVE만 표시)
           if (subscribedAccommodations.isNotEmpty) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('내 구독 숙소', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text('내 구독 숙소', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/my/subscriptions'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Row(
+                      children: [
+                        Text('전체보기', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                        Icon(Icons.chevron_right, size: 18),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             // const SizedBox(height: 12),
             if (pendingCount > 0)
