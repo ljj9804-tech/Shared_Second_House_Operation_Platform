@@ -23,7 +23,7 @@
  * ② 우리가 머물 집 섹션 — 전체 숙소 가로 슬라이드 (최대 5개)
  * ----------------------------------------------------------------------------------
  * [주의사항]
- * ⚠️ [TODO] 로그인 연동 후 AppConfig.tempUserId → 실제 userId로 교체
+ * ✅ AuthProvider.userId로 실제 로그인 사용자 연동
  * ⚠️ DevScreenLinks 위젯은 개발 완료 후 삭제 예정
  * ==================================================================================
  */
@@ -32,7 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
 import 'package:flutter_front/common/constants/app_colors.dart';
-import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/controller/chat_bot_controller.dart';
 import 'package:flutter_front/domain/controller/route_controller.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
@@ -63,9 +63,10 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StayAccommodationController>().loadAccommodationsAndFaqs(userId: AppConfig.tempUserId);
+      final userId = context.read<AuthProvider>().userId!;
+      context.read<StayAccommodationController>().loadAccommodationsAndFaqs(userId: userId);
       // 이동경로 버튼 활성화 판단(예약 기간)을 위해 내 예약도 로드
-      context.read<StayReservationController>().loadMyReservations();
+      context.read<StayReservationController>().loadMyReservations(userId);
       // 로그인 직후에만 새로 생성되는 화면이므로, 여기서 챗봇 대화를 초기화해
       // 이전 사용자(로그아웃 전)의 대화가 남지 않게 한다.
       context.read<ChatBotController>().clear();
@@ -119,7 +120,7 @@ class _MainScreenState extends State<MainScreen> {
     final navigator = Navigator.of(context);
 
     // 캐시가 아닌 최신 예약 상태로 다시 조회 (다른 화면/웹에서 취소됐을 수 있음)
-    await resCtrl.loadMyReservations();
+    await resCtrl.loadMyReservations(context.read<AuthProvider>().userId!);
     if (!mounted) return;
 
     if (_activeReservations(resCtrl).isEmpty) {
@@ -196,12 +197,38 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  /// 로그아웃 확인 후 처리 — AuthProvider.logout()이 상태를 unauthenticated로 바꾸면
+  /// AuthGate가 자동으로 로그인 화면으로 전환한다(별도 화면 이동 코드 불필요).
+  Future<void> _confirmLogout(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('로그아웃'),
+        content: const Text('로그아웃 하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('로그아웃',
+                style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true && context.mounted) {
+      await context.read<AuthProvider>().logout();
+    }
+  }
+
   /// 하단 탭 선택 — 홈 탭을 누르면 예약을 최신으로 다시 불러온다.
   /// (앱이 켜진 채로 두면 initState가 다시 안 돌아 새로고침이 안 되는 문제 해결)
   void _onTabSelected(int index) {
     setState(() => _currentIndex = index);
     if (index == 0) {
-      context.read<StayReservationController>().loadMyReservations();
+      context.read<StayReservationController>().loadMyReservations(context.read<AuthProvider>().userId!);
     }
   }
 
@@ -238,14 +265,14 @@ class _MainScreenState extends State<MainScreen> {
             label: '홈',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: '내 예약',
+            icon: Icon(Icons.delivery_dining),
+            activeIcon: Icon(Icons.delivery_dining),
+            label: '배달',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.smart_toy_outlined),
-            activeIcon: Icon(Icons.smart_toy),
-            label: 'AI 챗봇',
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: '내 정보',
           ),
           BottomNavigationBarItem( // 추가
             icon: Icon(Icons.person_outline),
@@ -256,6 +283,50 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
+
+  // TODO: 내 정보 담당 멤버가 이 메서드를 자신의 화면으로 교체
+  Widget _buildMyPageScaffold() => Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      title: const Text('내 정보', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+      centerTitle: true,
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+    ),
+    body: const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.person_outline, size: 56, color: AppColors.textHint),
+          SizedBox(height: 16),
+          Text('마이페이지 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+        ],
+      ),
+    ),
+  );
+
+  // TODO: 배달 팀원이 이 메서드를 자신의 화면으로 교체
+  Widget _buildDeliveryScaffold() => Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      title: const Text('배달', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+      centerTitle: true,
+      backgroundColor: AppColors.primary,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+    ),
+    body: const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.delivery_dining, size: 56, color: AppColors.textHint),
+          SizedBox(height: 16),
+          Text('배달 서비스 준비 중', style: TextStyle(fontSize: 15, color: AppColors.textSecondary)),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildHomeScaffold(StayAccommodationController ctrl) {
     return Scaffold(
@@ -269,12 +340,13 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: AppColors.primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.notifications_none, color: Colors.white),
-        //     onPressed: () {},
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            tooltip: '로그아웃',
+            onPressed: () => _confirmLogout(context),
+          ),
+        ],
       ),
       body: ctrl.isLoadingList
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -304,9 +376,30 @@ class _MainScreenState extends State<MainScreen> {
 
           // 내 구독 숙소 섹션 (ACTIVE만 표시)
           if (subscribedAccommodations.isNotEmpty) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('내 구독 숙소', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text('내 구독 숙소', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/my/subscriptions'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Row(
+                      children: [
+                        Text('전체보기', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                        Icon(Icons.chevron_right, size: 18),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             // const SizedBox(height: 12),
             if (pendingCount > 0)

@@ -5,8 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { StayAccommodationDto, StayAccommodationPriceDto } from "../page";
 
-import api, { TEMP_USER_ID } from "@/app/lib/auth";
-import { MONTH_OPTIONS } from "@/app/lib/constants";
+import { api } from "@/lib/api";
+import { tokenStorage } from "@/lib/token";
+import { UserResp } from "@/types/auth";
+import { MONTH_OPTIONS, TEAM_OPTIONS } from "@/app/lib/constants";
+import { calcTeamPrice } from "@/app/lib/priceUtils";
 import ImageSlider from "./components/ImageSlider";
 import PriceTable from "./components/PriceTable";
 import HouseStructure from "./components/HouseStructure";
@@ -24,19 +27,11 @@ export interface StayStoryDto {
 
 type SubscriptionStatus = "none" | "waiting" | "active" | "expired";
 
-export function calcTeamPrice(
-  monthlyPrice: number,
-  prices: StayAccommodationPriceDto[],
-  months: number,
-  teams: number,
-): number {
-  const priceInfo = prices.find(
-    (p) =>
-      months >= p.minMonths && (p.maxMonths === null || months < p.maxMonths),
-  );
-  if (!priceInfo) return 0;
-  return Math.floor((monthlyPrice * (1 - priceInfo.discountRate)) / teams);
+interface SubscriptionItemDto {
+  accommodationId: number;
+  status: string;
 }
+
 
 export default function AccommodationDetailPage() {
   const params = useParams();
@@ -49,6 +44,8 @@ export default function AccommodationDetailPage() {
   const [subscriptionStatus, setSubscriptionStatus] =
     useState<SubscriptionStatus>("none");
   const [loading, setLoading] = useState(true);
+  // 서버가 인정한 유효 로그인 여부 (/api/users 성공 시 true) — LocationMap 지도 노출/과금 게이트
+  const [authed, setAuthed] = useState(false);
 
   const [teams, setTeams] = useState(1);
   const [months, setMonths] = useState(1);
@@ -153,9 +150,9 @@ export default function AccommodationDetailPage() {
                 value={teams}
                 onChange={(e) => setTeams(Number(e.target.value))}
               >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12].map((n) => (
-                  <option key={n} value={n}>
-                    {n} 팀
+                {TEAM_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>

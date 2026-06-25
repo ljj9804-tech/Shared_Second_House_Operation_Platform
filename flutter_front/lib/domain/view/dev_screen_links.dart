@@ -1,8 +1,10 @@
 // TODO: [개발 완료 시 이 파일 전체 삭제]
 import 'package:flutter/material.dart';
 import 'package:flutter_front/common/constants/app_colors.dart';
+import 'package:flutter_front/domain/view/product_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_accommodation_list_screen.dart';
 import 'package:flutter_front/domain/view/stay_my_reservation_screen.dart';
+import 'package:flutter_front/domain/view/stay_my_subscription_screen.dart';
 import 'package:flutter_front/domain/view/stay_reservation_calendar_screen.dart';
 import 'package:flutter_front/domain/view/stay_subscription_apply_screen.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
@@ -10,6 +12,11 @@ import 'package:flutter_front/domain/view/guest_chat_main_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_screen.dart';
 import 'package:flutter_front/domain/view/guest_chat_bot_screen.dart';
 import 'package:flutter_front/domain/view/guest_restaurant_map_screen.dart';
+import 'package:provider/provider.dart';
+
+import '../controller/cart_controller.dart';
+import 'cart_screen.dart';
+import 'delivery_admin_screen.dart';
 
 /// TODO: [개발 완료 시 삭제] 팀원 화면 링크 모음 (개발 중 임시 사용)
 class DevScreenLinks extends StatelessWidget {
@@ -34,6 +41,12 @@ class DevScreenLinks extends StatelessWidget {
             title: '내 예약 목록',
             subtitle: '예약 카드 · 취소 기능',
             onTap: () => _go(context, const StayMyReservationScreen()),
+          ),
+          _DevTile(
+            icon: Icons.home_outlined,
+            title: '내 구독 목록',
+            subtitle: '구독 카드 · 예약하기 버튼',
+            onTap: () => _go(context, const StayMySubscriptionScreen()),
           ),
           _DevTile(
             icon: Icons.date_range_outlined,
@@ -109,6 +122,40 @@ class DevScreenLinks extends StatelessWidget {
             title: '맛집 지도',
             subtitle: '주변 맛집 지도 화면',
             onTap: () => _go(context, const GuestRestaurantMapScreen()),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 🍔 성규 — 커머스 & 관리자 전용 섹션 (직접 파일 연동 완료)
+          const _SectionLabel('성규 — 커머스 & 관리자'),
+          _DevTile(
+            icon: Icons.fastfood_outlined,
+            title: '상품 스토어',
+            subtitle: '상품 리스트 및 주문서 작성 화면',
+            onTap: () => _go(context, const ProductListScreen()),
+          ),
+          _DevTile(
+            icon: Icons.shopping_cart_outlined,
+            title: '장바구니',
+            subtitle: '담은 상품 확인 및 수량 조절',
+            onTap: () {
+              // 💡 CartScreen 위에 CartController 공급(주입)해주기
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider(
+                    create: (_) => CartController(), // 👈 여기에 프로젝트에서 쓰는 CartController 인스턴스를 넣어줍니다.
+                    child: const CartScreen(),
+                  ),
+                ),
+              );
+            },
+          ),
+          _DevTile(
+            icon: Icons.delivery_dining_outlined,
+            title: '배달 주문 내역 콘솔',
+            subtitle: '👑 관리자 전용 배달 콘솔 관제 센터',
+            onTap: () => _go(context, const DeliveryAdminScreen()),
           ),
 
           const SizedBox(height: 24),

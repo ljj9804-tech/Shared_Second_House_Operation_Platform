@@ -19,26 +19,28 @@
  */
 
 import 'package:dio/dio.dart';
-import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/core/api/dio_client.dart';
 import 'package:flutter_front/domain/dto/stay_reservation_dto.dart';
 
 class StayReservationService {
-  final Dio _dio = Dio(BaseOptions(baseUrl: AppConfig.baseUrl));
+  Dio get _dio => DioClient.instance.dio;
 
   Future<List<StayReservationDto>> getMyReservations(int userId) async {
     final response = await _dio.get(
       '/stay/reservations',
       queryParameters: {'userId': userId},
     );
+    if (response.data is! List) return [];
     return (response.data as List)
-        .map((e) => StayReservationDto.fromJson(e))
+        .map((e) => StayReservationDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<List<StayReservationDto>> getAccommodationReservations(int accommodationId) async {
     final response = await _dio.get('/stay/reservations/accommodation/$accommodationId');
+    if (response.data is! List) return [];
     return (response.data as List)
-        .map((e) => StayReservationDto.fromJson(e))
+        .map((e) => StayReservationDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 

@@ -1,6 +1,7 @@
 package com.busanit401.spring_back.domain.service;
 
 import com.busanit401.spring_back.domain.SubscriptionsUser;
+import com.busanit401.spring_back.dto.subscriptionsUser.SubscriptionDateRangeResp;
 import com.busanit401.spring_back.dto.subscriptionsUser.SubscriptionSearchCondition;
 import com.busanit401.spring_back.dto.subscriptionsUser.SubscriptionsUserResp;
 import com.busanit401.spring_back.exception.BusinessException;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -36,6 +38,20 @@ public class SubscriptionsUserService {
     @Transactional
     public SubscriptionsUserResp approve(Long subscriptionId) {
         SubscriptionsUser subscriptionsUser = findPendingSubscription(subscriptionId);
+
+        // [날짜 검증 추가] 승인 시점 이중 안전망 — 자기 자신(PENDING)은 제외하고 ACTIVE와 겹침 재확인
+        List<SubscriptionStatus> checkStatuses = List.of(SubscriptionStatus.ACTIVE);
+        boolean hasOverlap = !subscriptionsUserRepository.findOverlappingSubscriptionsExcluding(
+                subscriptionsUser.getAccommodationId(),
+                subscriptionsUser.getId(),
+                subscriptionsUser.getStartDate(),
+                subscriptionsUser.getEndDate(),
+                checkStatuses
+        ).isEmpty();
+        if (hasOverlap) {
+            throw new BusinessException(ErrorCode.SUBSCRIPTION_DATE_CONFLICT);
+        }
+
         subscriptionsUser.approve();
         log.info("[구독 승인] subscriptionId: {}", subscriptionId);
         return SubscriptionsUserResp.from(subscriptionsUser);
@@ -110,6 +126,16 @@ public class SubscriptionsUserService {
         return SubscriptionsUserResp.from(findSubscription(subscriptionId));
     }
 
+
+    // [날짜 검증 추가] 특정 숙소의 PENDING + ACTIVE 구독 기간 목록 조회 — 프론트 사용 불가 기간 표시용
+    public List<SubscriptionDateRangeResp> getSubscriptionsByAccommodation(Long accommodationId) {
+        List<SubscriptionStatus> statuses = List.of(SubscriptionStatus.PENDING, SubscriptionStatus.ACTIVE);
+        return subscriptionsUserRepository
+                .findByAccommodationIdAndStatusIn(accommodationId, statuses)
+                .stream()
+                .map(SubscriptionDateRangeResp::from)
+                .collect(Collectors.toList());
+    }
 
     // 관리자 - 복합 조건 검색
     public List<SubscriptionsUserResp> searchByCondition(SubscriptionSearchCondition condition) {

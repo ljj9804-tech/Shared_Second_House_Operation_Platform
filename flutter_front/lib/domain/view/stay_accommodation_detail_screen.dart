@@ -25,11 +25,13 @@
  * └─────────────────┴─────────────────────────────────────────────────────────────┘
  * ----------------------------------------------------------------------------------
  * [주의사항]
- * ⚠️ [TODO] 로그인 연동 후 AppConfig.tempUserId → 실제 userId로 교체
+ * ✅ AuthProvider.userId로 실제 로그인 사용자 연동
  * ==================================================================================
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // Factory
+import 'package:flutter/gestures.dart'; // EagerGestureRecognizer (스크롤 뷰 안에서 지도 드래그 허용)
 import 'package:flutter_front/domain/controller/restaurant_controller.dart';
 import 'package:flutter_front/domain/dto/place_dto.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -38,6 +40,7 @@ import 'package:flutter_front/common/constants/app_colors.dart';
 import 'package:flutter_front/common/constants/stay_constants.dart';
 import 'package:flutter_front/common/widget/bottom_sheet_selector.dart';
 import 'package:flutter_front/config/app_config.dart';
+import 'package:flutter_front/features/auth/provider/auth_provider.dart';
 import 'package:flutter_front/domain/controller/stay_accommodation_controller.dart';
 import 'package:flutter_front/domain/dto/stay_accommodation_dto.dart';
 import 'package:flutter_front/domain/dto/stay_story_dto.dart';
@@ -70,7 +73,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       if (!mounted) return;
       await context
           .read<StayAccommodationController>()
-          .loadAccommodationDetail(widget.accommodationId, AppConfig.tempUserId);
+          .loadAccommodationDetail(widget.accommodationId, context.read<AuthProvider>().userId!);
       if (!mounted) return;
       final accommodation =
           context.read<StayAccommodationController>().selectedAccommodation;
@@ -147,7 +150,7 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
       expandedHeight: 280,
       pinned: true,
       backgroundColor: AppColors.primary,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: IconThemeData(color: _showTitle ? Colors.white : AppColors.primary),
       title: AnimatedOpacity(
         opacity: _showTitle ? 1.0 : 0.0,
         duration: const Duration(milliseconds: 200),
@@ -443,6 +446,13 @@ class _StayAccommodationDetailScreenState extends State<StayAccommodationDetailS
                       myLocationButtonEnabled: false,
                       mapToolbarEnabled: false,
                       onMapCreated: (c) => _mapController = c,
+                      // CustomScrollView 안에 있어 부모가 드래그를 가로채므로,
+                      // 지도가 제스처를 우선 차지하도록 EagerGestureRecognizer 등록
+                      gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                        Factory<OneSequenceGestureRecognizer>(
+                          () => EagerGestureRecognizer(),
+                        ),
+                      },
                     ),
                     if (controller.isLoading)
                       Container(
