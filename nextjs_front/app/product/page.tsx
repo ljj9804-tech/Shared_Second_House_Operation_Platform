@@ -20,11 +20,12 @@ export default function ProductListPage() {
 
   // 🟢 [해결 핵심] useState 초기값에 엄선된 상품 데이터를 직접 할당하여 동기식 setState 호출 문제를 원천 차단합니다!
   const [products] = useState<ProductDto[]>([
-    { id: 101, name: '프리미엄 바비큐 세트', price: 45000, description: '세컨하우스에서 즐기는 최고의 바비큐' },
-    { id: 102, name: '지역 특산물 밀키트', price: 18000, description: '신선한 현지 재료로 만든 간편 밀키트' },
-    { id: 103, name: '유기농 조식 바구니', price: 25000, description: '아침을 깨우는 건강한 유기농 식단' },
-    { id: 104, name: '감성 불멍 장작 세트', price: 15000, description: '따뜻한 캠핑 감성을 위한 오로라 장작' },
-  ]);
+  { id: 1, name: '[추천] 오션뷰 세컨하우스 1박 이용권', price: 150000, description: '세컨하우스에서 즐기는 최고의 1박 이용권' },
+  { id: 2, name: '[조식] 수제 샌드위치 & 커피 세트', price: 12000, description: '신선한 재료로 만든 수제 샌드위치와 커피' },
+  { id: 3, name: '[시그니처] 대나무 바베큐 플래터', price: 45000, description: '가족과 함께 즐기는 시그니처 대나무 바베큐' },
+  { id: 4, name: '[가정간편식] 얼큰 차돌된장찌개', price: 18000, description: '집에서 간편하게 즐기는 얼큰한 차돌된장찌개' },
+  { id: 5, name: '콜라 / 사이다 500ml캔', price: 2500, description: '시원한 탄산음료 500ml' },
+]);
 
   // 장바구니 담기 핸들러
   const handleAddToCart = (productName: string) => {
