@@ -8,13 +8,20 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('장바구니'), backgroundColor: const Color(0xFF2E6F40)),
+      appBar: AppBar(
+          title: const Text('장바구니', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF2E6F40)
+      ),
       body: Consumer<CartProvider>(
         builder: (context, cartProvider, child) {
           final cartItems = cartProvider.cartItems;
 
-          // 💡 타입 불일치 에러 해결: .toInt() 추가
-          int totalAmount = cartItems.fold<int>(0, (sum, item) => sum + (item['price'] as int) * (item['quantity'] as int));
+          // Null Safety 처리: 혹시 모를 데이터 누락에 대비
+          int totalAmount = cartItems.fold<int>(0, (sum, item) {
+            int price = (item['price'] as num?)?.toInt() ?? 0;
+            int qty = (item['quantity'] as num?)?.toInt() ?? 0;
+            return sum + (price * qty);
+          });
 
           if (cartItems.isEmpty) {
             return const Center(child: Text('장바구니가 비어 있습니다.'));
@@ -27,7 +34,6 @@ class CartScreen extends StatelessWidget {
                   itemCount: cartItems.length,
                   itemBuilder: (context, index) {
                     final item = cartItems[index];
-                    // 💡 레이아웃 깨짐 해결: ListTile 대신 Row 사용
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       child: Padding(
@@ -38,14 +44,20 @@ class CartScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  Text('${item['price']}원'),
+                                  Text(item['name'] ?? '상품명 없음', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('${item['price'] ?? 0}원'),
                                 ],
                               ),
                             ),
-                            IconButton(icon: const Icon(Icons.remove), onPressed: () => cartProvider.decrementQuantity(item['productId'])),
-                            Text('${item['quantity']}'),
-                            IconButton(icon: const Icon(Icons.add), onPressed: () => cartProvider.incrementQuantity(item['productId'])),
+                            IconButton(
+                                icon: const Icon(Icons.remove),
+                                onPressed: () => cartProvider.incrementQuantity(item['productId'])
+                            ),
+                            Text('${item['quantity'] ?? 0}'),
+                            IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed: () => cartProvider.incrementQuantity(item['productId'])
+                            ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
                               onPressed: () => cartProvider.removeFromCart(item['productId']),
@@ -59,14 +71,24 @@ class CartScreen extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: Text('총 결제 금액: $totalAmount원', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                child: Text('총 결제 금액: $totalAmount원',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  cartProvider.addOrderFromCart(totalAmount);
-                  cartProvider.clearCart();
-                },
-                child: const Text('주문하기'),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E6F40)),
+                  onPressed: () {
+                    cartProvider.addOrderFromCart(totalAmount);
+                    cartProvider.clearCart();
+
+                    // 사용자 피드백 추가
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('주문이 접수되었습니다!'), duration: Duration(seconds: 2)),
+                    );
+                  },
+                  child: const Text('주문하기', style: TextStyle(color: Colors.white)),
+                ),
               )
             ],
           );
