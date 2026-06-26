@@ -8,6 +8,7 @@ import com.busanit401.spring_back.security.auth.CustomUserDetailsService;
 import com.busanit401.spring_back.domain.service.TokenBlacklistService;
 import com.busanit401.spring_back.domain.service.UserService;
 import com.busanit401.spring_back.util.JwtUtil;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,14 +48,23 @@ public class UserController {
         String authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             String accessToken = authorizationHeader.substring(7);
-            long expirationTime = jwtUtil.extractAllClaims(accessToken).getExpiration().getTime() - System.currentTimeMillis();
-            tokenBlacklistService.addToBlacklist(accessToken, expirationTime);
+            try {
+                long expirationTime = jwtUtil.extractAllClaims(accessToken).getExpiration().getTime() - System.currentTimeMillis();
+                tokenBlacklistService.addToBlacklist(accessToken, expirationTime);
+            } catch (JwtException e) {
+                // 이미 깨졌거나 만료된 토큰이므로 블랙리스트 처리 없이 무시
+            }
         }
 
-        // [개선] 로그아웃 시 Refresh Token도 블랙리스트에 넣어 추가 사용 방지
-        if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
-            long refreshExpTime = jwtUtil.extractAllClaims(refreshToken).getExpiration().getTime() - System.currentTimeMillis();
-            tokenBlacklistService.addToBlacklist(refreshToken, refreshExpTime);
+        if (refreshToken != null) {
+            try {
+                if (!jwtUtil.isTokenExpired(refreshToken)) {
+                    long refreshExpTime = jwtUtil.extractAllClaims(refreshToken).getExpiration().getTime() - System.currentTimeMillis();
+                    tokenBlacklistService.addToBlacklist(refreshToken, refreshExpTime);
+                }
+            } catch (JwtException e) {
+                // 이미 깨졌거나 만료된 토큰이므로 블랙리스트 처리 없이 무시
+            }
         }
 
         SecurityContextHolder.clearContext();
