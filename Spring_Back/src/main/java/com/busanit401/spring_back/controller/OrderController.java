@@ -30,11 +30,11 @@ public class OrderController {
     } // <-- 이 닫는 중괄호가 반드시 있어야 합니다.
 
     // GET: 주문 목록 조회
-    @GetMapping
-    public ResponseEntity<List<OrderResponseDto>> getOrders() {
+    @GetMapping("/admin")
+    public ResponseEntity<List<OrderResponseDto>> getAdminOrders() {
         List<OrderResponseDto> orderDtos = orderService.getAllOrders().stream()
                 .map(order -> OrderResponseDto.builder()
-                        .order_id(order.getOrderId())
+                        .order_id(order.getOrderId()) // 정확한 Getter 사용
                         .user_id(order.getUserId())
                         .delivery_address(order.getDeliveryAddress())
                         .total_amount(order.getTotalAmount())
